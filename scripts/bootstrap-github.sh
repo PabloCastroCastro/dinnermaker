@@ -70,7 +70,7 @@ echo "Creando milestones…"
 json_rows scripts/milestones.json | while IFS= read -r row; do
   title=$(json_field "$row" title)
   desc=$(json_field "$row" description)
-  exists=$(gh api repos/:owner/:repo/milestones -f state=all --jq \
+  exists=$(gh api "repos/:owner/:repo/milestones?state=all" --jq \
     ".[] | select(.title==\"$title\") | .title" 2>/dev/null || true)
   if [ -z "$exists" ]; then
     gh api repos/:owner/:repo/milestones -f title="$title" -f description="$desc" >/dev/null
