@@ -45,6 +45,11 @@ Dos formas, sin tocar código JS:
 
 ## Publicar el repo en GitHub y crear el backlog
 
+Repo real: **https://github.com/PabloCastroCastro/dinnermaker** (`main` para
+producción, `develop` para integración — ver `CONTRIBUTING.md` para el flujo
+de ramas y releases). Labels, los 4 milestones y las 18 issues del backlog
+inicial ya están creados ahí.
+
 Si tienes [Claude Code](https://docs.claude.com/claude-code) conectado a tu
 GitHub, ábrelo en esta carpeta y pídele que siga las instrucciones de
 `CLAUDE.md` (las lee automáticamente al arrancar). Eso crea el repo, sube el
@@ -53,7 +58,7 @@ código, y da de alta labels/milestones/issues a partir de `backlog/issues.json`
 También puedes hacerlo tú directamente sin Claude Code:
 ```bash
 gh auth login   # si no lo has hecho ya
-bash scripts/bootstrap-github.sh dinner-match private
+bash scripts/bootstrap-github.sh dinnermaker public
 ```
 El script es idempotente: si el repo, un label, un milestone o una issue ya
 existen, los salta en vez de duplicarlos.
@@ -69,7 +74,7 @@ Cualquier hosting estático con HTTPS sirve, por ejemplo:
 
 **GitHub Pages**
 1. Settings → Pages → Deploy from branch → `main` / `/ (root)`
-2. Tu app queda en `https://<usuario>.github.io/<repo>/`
+2. Tu app queda en `https://pablocastrocastro.github.io/dinnermaker/`
 
 Una vez desplegado, entra desde el móvil y usa "Añadir a pantalla de inicio"
 (o el banner de instalación que aparece solo en Chrome/Edge Android).
