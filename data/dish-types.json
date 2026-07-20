@@ -1,0 +1,5 @@
+[
+  { "id": "pizza", "name": "Pizza", "emoji": "🍕", "visualStyle": "round" },
+  { "id": "hamburguesa", "name": "Hamburguesa", "emoji": "🍔", "visualStyle": "stack" },
+  { "id": "ensalada", "name": "Ensalada", "emoji": "🥗", "visualStyle": "bowl" }
+]

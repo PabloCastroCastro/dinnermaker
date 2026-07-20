@@ -1,0 +1,14 @@
+{
+  "ingredientPoolSize": 20,
+  "categoryCaps": {
+    "queso": 4,
+    "carne": 5,
+    "pescado": 2,
+    "vegetal": 5,
+    "hierba": 2,
+    "fruta": 1,
+    "base": 1
+  },
+  "candidateMax": 6,
+  "candidateMinOverlap": 2
+}

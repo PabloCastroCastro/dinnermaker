@@ -1,0 +1,161 @@
+[
+  {
+    "title": "Desplegar en GitHub Pages",
+    "body": "Publicar la app en `https://<usuario>.github.io/<repo>/` usando GitHub Pages (Settings → Pages → Deploy from branch).\n\n**Aceptación**\n- [ ] Pages activado sirviendo desde `main` / raíz\n- [ ] La URL carga el juego y `/admin.html` sin errores de consola\n- [ ] README actualizado con el enlace real (sustituir placeholder)\n\nVer `README.md` sección Desplegar.",
+    "labels": [
+      "deploy",
+      "documentation"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "Tests automatizados para buildBalancedPool y pickCandidates",
+    "body": "`js/shared.js` tiene la lógica de negocio más sensible del proyecto (balanceo por categoría, selección de pizzas candidatas) y no tiene tests.\n\n**Aceptación**\n- [ ] Tests que verifiquen que ninguna categoría supera su cap en `buildBalancedPool` aunque el catálogo tenga muchos ingredientes de esa categoría\n- [ ] Tests de `pickCandidates` cubriendo: 0 matches, matches sin ninguna pizza candidata (>=1 overlap), y el caso normal\n- [ ] Runner simple sin dependencias pesadas (ej. `node:test` nativo de Node ≥18) para no romper la filosofía \"sin build step\"",
+    "labels": [
+      "testing"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "CI: lint y tests en cada PR",
+    "body": "GitHub Actions que corra en cada push/PR:\n- [ ] `node --check` sobre los ficheros de `js/`\n- [ ] Validar que los JSON de `/data` parsean y que las pizzas no referencian ingredientes inexistentes\n- [ ] Correr los tests del issue de testing una vez existan\n\nDepende de: Tests automatizados para buildBalancedPool y pickCandidates.",
+    "labels": [
+      "ci"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "Accesibilidad: navegación por teclado en las tarjetas de swipe",
+    "body": "Ahora mismo el swipe solo funciona con puntero/touch. Añadir:\n- [ ] Flechas ← → para votar no/sí\n- [ ] `aria-live` anunciando cambios de turno y resultado\n- [ ] Foco visible en botones y inputs (ya hay estilos base, revisar contraste)\n\nBuen first issue.",
+    "labels": [
+      "a11y",
+      "good first issue"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "Service worker: invalidar caché cuando cambia el contenido de /data",
+    "body": "El service worker cachea `/data/*.json` con estrategia stale-while-revalidate, pero si alguien actualiza `ingredients.json` en el repo, usuarios con la PWA instalada pueden tardar en verlo.\n\n**Aceptación**\n- [ ] Versionar `CACHE_NAME` automáticamente (ej. hash del contenido, o bump manual documentado en CONTRIBUTING)\n- [ ] Documentar en README el proceso a seguir al cambiar `/data`",
+    "labels": [
+      "bug",
+      "pwa"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "Admin: importar JSON (no solo exportar)",
+    "body": "Hoy `admin.html` solo permite descargar los JSON editados. Añadir botones \"Importar ingredients.json / pizzas.json / config.json\" que carguen un fichero local al borrador (localStorage), para poder restaurar o compartir configuraciones entre organizadores sin pasar por el repo.\n\n**Aceptación**\n- [ ] Input de fichero + validación de shape antes de sobrescribir el borrador\n- [ ] Mensaje de error claro si el JSON no tiene el formato esperado",
+    "labels": [
+      "admin",
+      "enhancement"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Validar integridad de datos al cargar (ingredientes huérfanos, ids duplicados)",
+    "body": "Si alguien edita `/data/*.json` a mano y comete un error (pizza referenciando un id de ingrediente que no existe, ids duplicados), la app debería avisar en vez de fallar en silencio o a medias.\n\n**Aceptación**\n- [ ] `loadData()` en `shared.js` valida referencias cruzadas y unicidad de ids\n- [ ] Si hay errores, `index.html` y `admin.html` muestran el detalle en la pantalla de error existente en vez de una pantalla en blanco",
+    "labels": [
+      "data",
+      "enhancement"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Metadatos dietéticos en ingredientes (vegetariano / vegano / sin gluten)",
+    "body": "Añadir campos opcionales a `ingredients.json` (ej. `\"diet\": [\"vegetariano\"]`) y mostrar filtros antes de la ronda 1 para excluir categorías o ingredientes según restricciones del grupo.\n\n**Aceptación**\n- [ ] Esquema documentado en `PROJECT.md`\n- [ ] UI de filtro previa a ronda 1 (opcional, no bloqueante si nadie filtra nada)",
+    "labels": [
+      "data",
+      "enhancement"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Backend mínimo para guardar cambios del admin sin exportar/commitear a mano",
+    "body": "El flujo actual de `admin.html` (editar → descargar JSON → sustituir en `/data` → commit) es manual. Evaluar un backend ligero (ej. función serverless + GitHub API, o Supabase) que permita guardar cambios directamente.\n\n**Aceptación**\n- [ ] Documento de diseño en `/PROJECT.md` o `/docs/adr/` con la opción elegida y alternativas descartadas\n- [ ] Prototipo funcional guardando al menos `ingredients.json`\n\nEste issue es el puente entre v1.1 y v2.0 — bloquea el multijugador remoto real si se quiere edición de contenido en vivo durante una partida.",
+    "labels": [
+      "backend",
+      "enhancement"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Diseño técnico: sincronización de partida entre varios móviles",
+    "body": "Documento de diseño antes de tocar código: cómo se sincroniza el estado de una partida (jugadores, ronda actual, votos) entre dispositivos distintos.\n\n**Preguntas a resolver**\n- [ ] ¿WebSockets con servidor propio, o backend gestionado (Supabase Realtime, Firebase, PartyKit)?\n- [ ] Modelo de sesión: código de partida corto (PIN) vs. URL con id largo\n- [ ] Qué pasa si un jugador se desconecta a mitad de ronda\n- [ ] Compatibilidad hacia atrás: el modo \"un móvil pasado entre todos\" debe seguir funcionando sin backend",
+    "labels": [
+      "architecture",
+      "multiplayer"
+    ],
+    "milestone": "v2.0 – Multijugador remoto"
+  },
+  {
+    "title": "Backend de sesiones para multijugador remoto",
+    "body": "Implementación siguiendo el diseño del issue de arquitectura: servidor (o servicio gestionado) que mantiene el estado de una partida y lo sincroniza entre los móviles conectados a esa sesión.\n\nDepende de: Diseño técnico: sincronización de partida entre varios móviles.",
+    "labels": [
+      "backend",
+      "multiplayer"
+    ],
+    "milestone": "v2.0 – Multijugador remoto"
+  },
+  {
+    "title": "Unirse a partida por código/QR",
+    "body": "Pantalla para crear una partida remota (genera código corto + QR) y para unirse introduciendo el código. Sustituye la pantalla de \"handoff\" (pasar el móvil) cuando el modo es remoto.\n\nDepende de: Backend de sesiones para multijugador remoto.",
+    "labels": [
+      "multiplayer",
+      "enhancement"
+    ],
+    "milestone": "v2.0 – Multijugador remoto"
+  },
+  {
+    "title": "Migrar el estado del cliente a sync remoto manteniendo el modo local como fallback",
+    "body": "Refactor de `js/app.js` para que el `state` pueda vivir en el backend cuando la partida es remota, sin romper el modo actual (un móvil, todo en memoria). Idealmente vía una capa de \"store\" con dos implementaciones (local / remota) detrás de la misma interfaz.\n\nDepende de: Backend de sesiones para multijugador remoto.",
+    "labels": [
+      "multiplayer",
+      "refactor"
+    ],
+    "milestone": "v2.0 – Multijugador remoto"
+  },
+  {
+    "title": "Historial de partidas",
+    "body": "Guardar qué pizza salió en cada partida jugada (fecha, jugadores, pizza(s) resultado). En modo local: `localStorage`. En modo remoto (cuando exista): backend.\n\n**Aceptación**\n- [ ] Pantalla \"Historial\" accesible desde el setup\n- [ ] No bloquea si no hay partidas previas",
+    "labels": [
+      "enhancement"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Excluir categorías completas antes de empezar (ej. sin pescado)",
+    "body": "En la pantalla de setup, checkboxes opcionales para excluir categorías enteras (pescado, carne...) antes de generar el pool de ronda 1 — útil para grupos con vegetarianos o alergias conocidas de antemano, sin depender de que alguien deslice \"no\" ingrediente a ingrediente.\n\n**Aceptación**\n- [ ] No afecta al balanceo de las categorías restantes (se recalculan los caps sobre las categorías activas)",
+    "labels": [
+      "enhancement"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Soporte multi-idioma (i18n)",
+    "body": "Todo el texto está hardcodeado en español en `app.js`/`admin.js`. Extraer a ficheros de strings (`i18n/es.json`, `i18n/en.json`, ...) y añadir selector de idioma.\n\nNo cubre traducir el contenido de `/data` (nombres de ingredientes/pizzas), solo la UI.",
+    "labels": [
+      "enhancement",
+      "i18n"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Admin: reordenar ingredientes y pizzas (drag & drop)",
+    "body": "El orden en `admin.html` es el de inserción. Añadir reordenado manual (drag & drop o botones subir/bajar) que se refleje en el JSON exportado, útil para organizar el catálogo por relevancia.",
+    "labels": [
+      "admin",
+      "enhancement",
+      "good first issue"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Añadir más tipos de cena de fábrica (pasta, tacos, sushi, poke, sopa)",
+    "body": "Ahora mismo solo pizza/hamburguesa/ensalada tienen contenido completo. La arquitectura ya soporta cualquier tipo (`data/types/<id>/...`), así que esto es puramente de contenido, no de código.\n\n**Aceptación**\n- [ ] Cada tipo nuevo con ~15-20 ingredientes balanceados por categoría y ~10-12 recetas\n- [ ] `visualStyle` elegido con criterio (bowl para pasta/sopa/poke, round para sushi, stack para tacos)\n- [ ] Validado con el mismo script de consistencia usado para pizza/hamburguesa/ensalada (ver PROJECT.md)",
+    "labels": [
+      "data",
+      "good first issue"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  }
+]

@@ -1,0 +1,14 @@
+[
+  { "id": "clasica", "name": "Clásica", "ingredients": ["pan_brioche", "carne", "cheddar", "lechuga_b", "tomate_b", "ketchup"] },
+  { "id": "bacon", "name": "Con bacon", "ingredients": ["pan_brioche", "carne", "bacon", "cheddar", "cebolla_morada"] },
+  { "id": "bbq", "name": "BBQ", "ingredients": ["pan_brioche", "carne", "bacon", "cheddar", "salsa_bbq_b", "cebolla_morada"] },
+  { "id": "vegetariana_b", "name": "Vegetariana", "ingredients": ["pan_integral", "veggie", "suizo", "lechuga_b", "tomate_b", "aguacate_b"] },
+  { "id": "hawaiana_b", "name": "Hawaiana", "ingredients": ["pan_brioche", "carne", "pina_b", "cheddar"] },
+  { "id": "pollo_crujiente", "name": "Pollo crujiente", "ingredients": ["pan_brioche", "pollo", "lechuga_b", "mayonesa", "pepinillos"] },
+  { "id": "doble_queso", "name": "Doble queso", "ingredients": ["pan_brioche", "carne", "cheddar", "suizo", "cebolla_morada", "ketchup"] },
+  { "id": "mexicana_b", "name": "Mexicana", "ingredients": ["pan_brioche", "carne", "jalapeno_b", "azul", "aguacate_b"] },
+  { "id": "con_huevo", "name": "Con huevo", "ingredients": ["pan_brioche", "carne", "huevo_b", "cheddar", "bacon"] },
+  { "id": "salmon_avocado", "name": "Salmón y aguacate", "ingredients": ["pan_integral", "salmon_burger", "aguacate_b", "lechuga_b", "mayonesa"] },
+  { "id": "azul_bacon", "name": "Azul y bacon", "ingredients": ["pan_brioche", "carne", "azul", "bacon", "cebolla_morada"] },
+  { "id": "clasica_pepinillos", "name": "Clásica con pepinillos", "ingredients": ["pan_brioche", "carne", "cheddar", "pepinillos", "mostaza"] }
+]

@@ -1,0 +1,12 @@
+deploy	E8A33D	Publicación y despliegue
+testing	6B8F47	Tests automatizados
+ci	2E2119	Integración continua
+a11y	B4654A	Accesibilidad
+pwa	C98A3E	Progressive Web App / service worker
+admin	E1472B	Panel de configuración (admin.html)
+backend	1B1410	Requiere servidor / servicio externo
+multiplayer	D3562F	Multijugador remoto
+architecture	8C9E5E	Decisiones de diseño técnico
+data	A46B2E	Modelo de datos / contenido en /data
+i18n	6B8F47	Internacionalización
+refactor	2E2119	Reestructuración de código sin cambio de comportamiento

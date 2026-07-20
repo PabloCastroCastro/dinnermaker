@@ -1,0 +1,14 @@
+[
+  { "id": "cesar_ensalada", "name": "César", "ingredients": ["lechuga_e", "pollo_e", "parmesano_e", "cesar_e"] },
+  { "id": "griega", "name": "Griega", "ingredients": ["lechuga_e", "feta_e", "cherry_e", "pepino_e", "cebollamorada_e", "vinagreta_e"] },
+  { "id": "pollo_aguacate", "name": "Pollo y aguacate", "ingredients": ["lechuga_e", "pollo_e", "aguacate_e", "maiz_e", "vinagreta_e"] },
+  { "id": "atun_ensalada", "name": "De atún", "ingredients": ["lechuga_e", "atun_e", "huevo_e", "cherry_e", "maiz_e", "vinagreta_e"] },
+  { "id": "vegana_garbanzos", "name": "Vegana de garbanzos", "ingredients": ["espinaca_e", "garbanzos_e", "zanahoria_e", "aguacate_e", "vinagreta_e"] },
+  { "id": "cabra_nueces", "name": "De cabra y nueces", "ingredients": ["rucula_e", "cabra_e", "nueces_e", "manzana_e", "mielmostaza_e"] },
+  { "id": "salmon_ensalada", "name": "De salmón", "ingredients": ["espinaca_e", "salmon_e", "aguacate_e", "pepino_e", "vinagreta_e"] },
+  { "id": "otonal", "name": "Otoñal", "ingredients": ["espinaca_e", "manzana_e", "nueces_e", "feta_e", "mielmostaza_e"] },
+  { "id": "detox", "name": "Detox", "ingredients": ["rucula_e", "zanahoria_e", "pepino_e", "maiz_e", "pipas_e", "vinagreta_e"] },
+  { "id": "proteica", "name": "Proteica", "ingredients": ["lechuga_e", "pollo_e", "huevo_e", "garbanzos_e", "parmesano_e", "cesar_e"] },
+  { "id": "fresca_verano", "name": "Fresca de verano", "ingredients": ["lechuga_e", "fresas_e", "cabra_e", "nueces_e", "mielmostaza_e"] },
+  { "id": "mexicana_e", "name": "Mexicana", "ingredients": ["lechuga_e", "garbanzos_e", "maiz_e", "aguacate_e", "cebollamorada_e", "vinagreta_e"] }
+]

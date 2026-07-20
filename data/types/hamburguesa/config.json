@@ -1,0 +1,13 @@
+{
+  "ingredientPoolSize": 19,
+  "categoryCaps": {
+    "pan": 2,
+    "proteina": 4,
+    "queso": 3,
+    "vegetal": 5,
+    "salsa": 3,
+    "extra": 2
+  },
+  "candidateMax": 6,
+  "candidateMinOverlap": 2
+}

@@ -1,0 +1,6 @@
+[
+  { "title": "v1.0 – Deploy & Polish", "description": "Publicar la app y dejar una base sólida: deploy, tests, CI, accesibilidad básica, PWA correcta." },
+  { "title": "v1.1 – Contenido configurable", "description": "Cerrar el círculo de configurabilidad: import/export en el admin, validación de datos, metadatos dietéticos, primer paso hacia persistencia real." },
+  { "title": "v2.0 – Multijugador remoto", "description": "Cada jugador vota desde su propio móvil en tiempo real, sin pasar el dispositivo." },
+  { "title": "v1.2 – Calidad de vida", "description": "Mejoras que no bloquean nada crítico: historial, filtros de setup, i18n, mejoras de admin." }
+]

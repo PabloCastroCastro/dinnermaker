@@ -1,0 +1,14 @@
+{
+  "ingredientPoolSize": 17,
+  "categoryCaps": {
+    "base": 2,
+    "proteina": 4,
+    "queso": 2,
+    "vegetal": 5,
+    "fruta": 1,
+    "frutoseco": 1,
+    "aderezo": 2
+  },
+  "candidateMax": 6,
+  "candidateMinOverlap": 2
+}
