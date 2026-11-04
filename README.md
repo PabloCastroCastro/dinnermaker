@@ -126,7 +126,14 @@ PROJECT.md              definición de proyecto y arquitectura
 CLAUDE.md                contexto e instrucciones para Claude Code
 CONTRIBUTING.md
 CHANGELOG.md
+LICENSE                 licencia MIT
 backlog/issues.json      backlog estructurado (fuente de las GitHub Issues)
 scripts/bootstrap-github.sh   crea repo/labels/milestones/issues en GitHub
 .github/                 plantillas de issue y PR
 ```
+
+## Licencia
+
+[MIT](./LICENSE): puedes usar, copiar, modificar y redistribuir el código
+libremente, también con fines comerciales, siempre que mantengas el aviso
+de copyright y la licencia.

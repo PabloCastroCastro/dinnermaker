@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 ## [Sin publicar]
 
 ### Añadido
+- Licencia MIT (`LICENSE`) y metadatos del repo en GitHub: descripción,
+  web (GitHub Pages) y topics (#28).
 - Tests de `buildBalancedPool`, `pickCandidates`, `resolveDishType` y
   `shuffle` con `node:test` (`tests/shared.test.mjs`), incluyendo
   comprobaciones sobre los datos reales de `data/types/` (#2).
