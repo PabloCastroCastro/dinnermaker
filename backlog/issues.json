@@ -35,7 +35,7 @@
   },
   {
     "title": "Service worker: invalidar caché cuando cambia el contenido de /data",
-    "body": "El service worker cachea `/data/*.json` con estrategia stale-while-revalidate, pero si alguien actualiza `ingredients.json` en el repo, usuarios con la PWA instalada pueden tardar en verlo.\n\n**Aceptación**\n- [ ] Versionar `CACHE_NAME` automáticamente (ej. hash del contenido, o bump manual documentado en CONTRIBUTING)\n- [ ] Documentar en README el proceso a seguir al cambiar `/data`",
+    "body": "El service worker cachea `/data/*.json` con estrategia stale-while-revalidate, pero si alguien actualiza `ingredients.json` en el repo, usuarios con la PWA instalada pueden tardar en verlo.\n\n**Aceptación**\n- [ ] Versionar `CACHE_NAME` automáticamente (ej. hash del contenido, o bump manual documentado en CONTRIBUTING)\n- [ ] Documentar en README el proceso a seguir al cambiar `/data`\n- [ ] No cachear respuestas de error: comprobar `networkResponse.ok` antes de `cache.put` (hoy un 404/500 se guarda y se sirve)\n- [ ] Network-first (o similar) para `/data/*.json`, de modo que el `cache: \"no-store\"` de `fetchJSON` tenga efecto\n- [ ] No silenciar los fallos de `cache.addAll` en `install` (al menos `console.warn`)",
     "labels": [
       "bug",
       "pwa"
@@ -155,6 +155,40 @@
     "labels": [
       "data",
       "good first issue"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Ronda 2 se queda en \"Cargando…\" si falla la carga del tipo de cena",
+    "body": "`startRound2` (`js/app.js`) hace `await loadTypeData(...)` sin `try/catch`. Si falla (tipo listado en `dish-types.json` sin su carpeta `data/types/<id>/`, JSON inválido, o sin conexión y el tipo no estaba cacheado), la promesa se rechaza y la pantalla se queda en `loading` indefinidamente.\n\n**Aceptación**\n- [ ] Capturar el error y pasar a `stage = \"error\"` con un mensaje que indique qué tipo/fichero falló\n- [ ] Ofrecer volver al inicio desde la pantalla de error\n- [ ] Probado manualmente renombrando temporalmente una carpeta de `data/types/`",
+    "labels": [
+      "bug"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "Admin: no se pueden definir topes para categorías nuevas",
+    "body": "La pestaña Reglas de `admin.html` solo pinta inputs para las claves que ya existen en `config.categoryCaps`. Un tipo creado desde el admin arranca con `categoryCaps: {}`, así que nunca se le pueden poner topes desde la UI; solo aparece el aviso de \"categorías sin tope definido\". Esto rompe el flujo de \"Añadir un tipo de cena nuevo\" del README.\n\n**Aceptación**\n- [ ] Mostrar un input por cada categoría en uso por los ingredientes del tipo, aunque no tenga tope aún (vacío = sin límite)\n- [ ] Permitir quitar el tope de categorías que ya no usa ningún ingrediente\n- [ ] Permitir guardar `0` en `candidateMinOverlap` / topes (hoy `+value || 2` lo impide)",
+    "labels": [
+      "bug",
+      "admin"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Admin: el borrador local oculta para siempre los cambios de /data",
+    "body": "Si existe `dinnerMatchAdminDraft` en localStorage, `init()` de `js/admin.js` lo carga y no vuelve a leer `/data`. Cualquier cambio posterior en el repo (otro commit, otro editor) queda oculto sin más aviso que un toast. Además, si no hay borrador y falla `loadGameConfig()`, la promesa no se captura y la página queda en blanco.\n\n**Aceptación**\n- [ ] Detectar si `/data` difiere del contenido base del borrador y avisar de forma visible (con opción de descartar o mantener)\n- [ ] Manejar errores de carga en `init()` mostrando un mensaje (como hace el juego)",
+    "labels": [
+      "bug",
+      "admin"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Correcciones menores en juego y admin",
+    "body": "Bugs pequeños detectados en revisión de código.\n\n**Aceptación**\n- [ ] Escapar `emoji` con `esc()` al insertarlo en `innerHTML` (`js/app.js`, `js/admin.js`)\n- [ ] Recortar los nombres guardados en localStorage a `gameConfig.maxPlayers` y no permitir nombres vacíos\n- [ ] Manejar `pointercancel` en el swipe para no dejar `dragging` en `true`\n- [ ] `pickCandidates`: no proponer la receta personalizada si coincide exactamente con una receta existente\n- [ ] Docs: `PROJECT.md` §5 dice que la ronda 1 usa `buildBalancedPool` (usa `shuffle`); `dishTypeCandidateMax` no se usa en ningún sitio (usarlo o quitarlo)",
+    "labels": [
+      "bug"
     ],
     "milestone": "v1.2 – Calidad de vida"
   }
