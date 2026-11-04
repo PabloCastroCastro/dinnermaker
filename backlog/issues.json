@@ -26,7 +26,7 @@
   },
   {
     "title": "Accesibilidad: navegación por teclado en las tarjetas de swipe",
-    "body": "Ahora mismo el swipe solo funciona con puntero/touch. Añadir:\n- [ ] Flechas ← → para votar no/sí\n- [ ] `aria-live` anunciando cambios de turno y resultado\n- [ ] Foco visible en botones y inputs (ya hay estilos base, revisar contraste)\n\nBuen first issue.",
+    "body": "Ahora mismo el swipe solo funciona con puntero/touch. Añadir:\n- [ ] Flechas ← → para votar no/sí\n- [ ] `aria-live` anunciando cambios de turno y resultado\n- [ ] Foco visible en botones y inputs (ya hay estilos base, revisar contraste)\n- [ ] Revisar contraste de color (WCAG AA) en tarjetas, chips y botones\n- [ ] No depender solo del emoji para identificar elementos: el nombre siempre visible y accesible (`aria-label`)\n\nBuen first issue.",
     "labels": [
       "a11y",
       "good first issue"
@@ -43,8 +43,8 @@
     "milestone": "v1.0 – Deploy & Polish"
   },
   {
-    "title": "Admin: importar JSON (no solo exportar)",
-    "body": "Hoy `admin.html` solo permite descargar los JSON editados. Añadir botones \"Importar ingredients.json / pizzas.json / config.json\" que carguen un fichero local al borrador (localStorage), para poder restaurar o compartir configuraciones entre organizadores sin pasar por el repo.\n\n**Aceptación**\n- [ ] Input de fichero + validación de shape antes de sobrescribir el borrador\n- [ ] Mensaje de error claro si el JSON no tiene el formato esperado",
+    "title": "Admin: importación masiva (JSON y CSV) de ingredientes, recetas y tipos",
+    "body": "Hoy `admin.html` solo permite descargar los JSON editados. Añadir importación desde fichero local al borrador (localStorage), para cargar contenido en bloque, restaurar o compartir configuraciones entre organizadores sin pasar por el repo.\n\n**Aceptación**\n- [ ] Importar `ingredients.json`, `recipes.json` y `config.json` del tipo seleccionado en el desplegable (mismo formato que la descarga)\n- [ ] Importar también CSV (ingredientes: `id,name,emoji,cat`; recetas: `id,name,ingredients` con ids separados por `|`)\n- [ ] Importar un tipo nuevo completo (`ingredients` + `recipes` + `config`) de una vez\n- [ ] Modo a elegir: añadir, fusionar (actualiza por `id`) o reemplazar\n- [ ] Detección de duplicados por `id`\n- [ ] Vista previa de los cambios antes de aplicarlos\n- [ ] Informe final: añadidos, actualizados, saltados y con errores\n- [ ] Validación de forma y de integridad (ver issue de validación) antes de tocar el borrador; mensaje de error claro si falla\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
     "labels": [
       "admin",
       "enhancement"
@@ -53,7 +53,7 @@
   },
   {
     "title": "Validar integridad de datos al cargar (ingredientes huérfanos, ids duplicados)",
-    "body": "Si alguien edita `/data/*.json` a mano y comete un error (pizza referenciando un id de ingrediente que no existe, ids duplicados), la app debería avisar en vez de fallar en silencio o a medias.\n\n**Aceptación**\n- [ ] `loadData()` en `shared.js` valida referencias cruzadas y unicidad de ids\n- [ ] Si hay errores, `index.html` y `admin.html` muestran el detalle en la pantalla de error existente en vez de una pantalla en blanco",
+    "body": "Si alguien edita `/data` a mano o importa contenido con errores (receta referenciando un ingrediente que no existe, ids duplicados, categorías sin tope), la app debería avisar en vez de fallar en silencio o a medias.\n\n**Aceptación**\n- [ ] Función de validación en `shared.js` (única fuente de verdad) que compruebe por tipo: ids de `recipes.json` existen en su `ingredients.json`, `cat` de ingredientes coinciden con claves de `categoryCaps`, sin ids duplicados (ingredientes, recetas, tipos)\n- [ ] Se aplica en tres puntos: carga del juego, importación en el admin y descarga desde el admin\n- [ ] Si hay errores, `index.html` y `admin.html` muestran el detalle en la pantalla de error existente en vez de una pantalla en blanco\n- [ ] Usable también desde Node para validar `/data` en CI\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
     "labels": [
       "data",
       "enhancement"
@@ -151,7 +151,7 @@
   },
   {
     "title": "Añadir más tipos de cena de fábrica (pasta, tacos, sushi, poke, sopa)",
-    "body": "Ahora mismo solo pizza/hamburguesa/ensalada tienen contenido completo. La arquitectura ya soporta cualquier tipo (`data/types/<id>/...`), así que esto es puramente de contenido, no de código.\n\n**Aceptación**\n- [ ] Cada tipo nuevo con ~15-20 ingredientes balanceados por categoría y ~10-12 recetas\n- [ ] `visualStyle` elegido con criterio (bowl para pasta/sopa/poke, round para sushi, stack para tacos)\n- [ ] Validado con el mismo script de consistencia usado para pizza/hamburguesa/ensalada (ver PROJECT.md)",
+    "body": "Ahora mismo solo pizza/hamburguesa/ensalada tienen contenido completo. La arquitectura ya soporta cualquier tipo (`data/types/<id>/...`), así que esto es puramente de contenido, no de código.\n\n**Aceptación**\n- [ ] Cada tipo nuevo con ~15-20 ingredientes balanceados por categoría y ~10-12 recetas\n- [ ] `visualStyle` elegido con criterio (bowl para pasta/sopa/poke, round para sushi, stack para tacos)\n- [ ] Validado con el mismo script de consistencia usado para pizza/hamburguesa/ensalada (ver PROJECT.md)\n- [ ] Requiere antes: muestra de tipos en ronda 1 (`dishTypeCandidateMax`) y validación de datos\n\nHay una biblioteca propuesta de 16 tipos / 120 recetas (tacos, tortilla, pasta, bocadillos, wraps, arroz/fideos, cremas, sushi, kebab, pollo frito, perritos, poke, ramen, burritos, raciones, indio/tailandés) pendiente de revisar e integrar.",
     "labels": [
       "data",
       "good first issue"
@@ -186,10 +186,53 @@
   },
   {
     "title": "Correcciones menores en juego y admin",
-    "body": "Bugs pequeños detectados en revisión de código.\n\n**Aceptación**\n- [ ] Escapar `emoji` con `esc()` al insertarlo en `innerHTML` (`js/app.js`, `js/admin.js`)\n- [ ] Recortar los nombres guardados en localStorage a `gameConfig.maxPlayers` y no permitir nombres vacíos\n- [ ] Manejar `pointercancel` en el swipe para no dejar `dragging` en `true`\n- [ ] `pickCandidates`: no proponer la receta personalizada si coincide exactamente con una receta existente\n- [ ] Docs: `PROJECT.md` §5 dice que la ronda 1 usa `buildBalancedPool` (usa `shuffle`); `dishTypeCandidateMax` no se usa en ningún sitio (usarlo o quitarlo)",
+    "body": "Bugs pequeños detectados en revisión de código.\n\n**Aceptación**\n- [ ] Escapar `emoji` con `esc()` al insertarlo en `innerHTML` (`js/app.js`, `js/admin.js`)\n- [ ] Recortar los nombres guardados en localStorage a `gameConfig.maxPlayers` y no permitir nombres vacíos\n- [ ] Manejar `pointercancel` en el swipe para no dejar `dragging` en `true`\n- [ ] `pickCandidates`: no proponer la receta personalizada si coincide exactamente con una receta existente\n- [ ] Docs: `PROJECT.md` §5 dice que la ronda 1 usa `buildBalancedPool` (usa `shuffle`) (`dishTypeCandidateMax` se cubre en el issue de muestra de tipos en ronda 1)",
     "labels": [
       "bug"
     ],
     "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Votos ponderados: alternativa a la unanimidad estricta",
+    "body": "Con 4 o más jugadores, exigir que todos digan sí en cada ronda hace que muchas partidas acaben en \"sin coincidencias\". Propuesta: mantener la unanimidad como primera opción y, si no la hay, caer al más votado mostrándolo de forma honesta.\n\nOjo: cambia un principio de `PROJECT.md` §1 (\"no se fuerza un resultado\"), así que hay que actualizar la definición del juego.\n\n**Aceptación**\n- [ ] Lógica de match en `shared.js`: unanimidad → si no hay, elementos con más sís por encima de un umbral\n- [ ] Umbral configurable en `game-config.json` (ej. `minAgreementRatio: 0.6`); con `1` se comporta como hoy\n- [ ] La UI indica el grado de acuerdo (\"5 de 6 estabais de acuerdo\") cuando no es unánime\n- [ ] Si nada supera el umbral, se mantiene el mensaje de \"sin coincidencias\"\n- [ ] Tests de la nueva lógica (depende del issue de tests)\n- [ ] `PROJECT.md` §1 y §5 actualizados\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
+    "labels": [
+      "enhancement",
+      "architecture"
+    ],
+    "milestone": "v1.1 – Contenido configurable"
+  },
+  {
+    "title": "Ronda 1: mostrar una muestra de tipos de cena (usar dishTypeCandidateMax)",
+    "body": "`game-config.json` define `dishTypeCandidateMax`, pero el código no lo usa: la ronda 1 enseña todos los tipos. Con la biblioteca ampliada (~19 tipos) cada jugador tendría que deslizar 19 cartas. Requisito previo para añadir muchos tipos de fábrica.\n\n**Aceptación**\n- [ ] La ronda 1 muestra como máximo `dishTypeCandidateMax` tipos elegidos al azar (lógica en `shared.js`)\n- [ ] Opcional: filtro previo en el setup para excluir tipos (\"hoy no quiero pescado\"), coordinado con el issue de excluir categorías\n- [ ] Valor por defecto razonable (8-10) y documentado en `PROJECT.md` §4\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
+    "labels": [
+      "enhancement",
+      "data"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Deshacer el último swipe",
+    "body": "Si un jugador desliza por error, hoy no hay vuelta atrás.\n\n**Aceptación**\n- [ ] Botón \"↶ Deshacer\" en la pantalla de swipe que revierte el último voto del jugador actual\n- [ ] Solo dentro del turno del jugador actual (no se pueden deshacer votos de otro)\n- [ ] Deshabilitado en la primera carta del turno\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Pantalla de resultado: re-sorteo, desempate en ronda 3 y compartir",
+    "body": "Mejoras al cierre de la partida.\n\n**Aceptación**\n- [ ] Ronda 1: botón \"Volver a sortear\" cuando hubo empate entre varios tipos\n- [ ] Ronda 3: si coinciden varios platos, sortear el principal (hoy se coge el primero del mazo) y permitir volver a sortear\n- [ ] Botón \"Compartir\" con la Web Share API (texto con tipo, plato e ingredientes); fallback a copiar al portapapeles si no está disponible\n- [ ] (Opcional, futuro) enlaces por tipo a receta o a pedir a domicilio, como campo nuevo en los datos\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
+    "labels": [
+      "enhancement"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Metadatos del repo: descripción, topics y licencia",
+    "body": "El repo en GitHub no tiene descripción, topics, licencia ni URL de la web.\n\n**Aceptación**\n- [ ] Descripción corta y homepage apuntando a GitHub Pages\n- [ ] Topics (ej. `pwa`, `vanilla-js`, `food`, `group-decision`)\n- [ ] Elegir licencia y añadir `LICENSE` (decisión del propietario)\n\n_Origen: documento de propuestas de mejora (nov 2026)._",
+    "labels": [
+      "documentation"
+    ],
+    "milestone": "v1.0 – Deploy & Polish"
   }
 ]
