@@ -133,9 +133,9 @@ tipo.
 
 - **`buildBalancedPool(ingredients, config)`**: agrupa por `cat`, muestrea
   hasta `categoryCaps[cat]` de cada grupo (barajado), concatena y recorta a
-  `ingredientPoolSize`. Se usa igual en ronda 1 (con `dishTypes` como
-  "ingredientes" sin balanceo real, ya que no suele haber muchos tipos) y en
-  ronda 2.
+  `ingredientPoolSize`. Se usa en la ronda 2. La ronda 1 no lo usa: baraja
+  todos los tipos de `dish-types.json` con `shuffle` (limitar cuántos se
+  enseñan es la issue de `dishTypeCandidateMax`).
 - **Match**: intersección de los ids marcados "sí" por todos los jugadores,
   en cualquier ronda.
 - **`resolveDishType(matchedTypes)`**: si hay más de un tipo de cena
@@ -145,9 +145,10 @@ tipo.
   `overlap` = nº de sus ingredientes que están en el match de ronda 2;
   `extra` = resto. Se ordenan por overlap desc, extra asc; se filtran las
   que tengan `overlap >= candidateMinOverlap` (si hay menos de 2 así, se
-  relaja a `overlap >= 1`). Se añade siempre una receta "personalizada" con
-  exactamente los ingredientes matcheados, como comodín. Se recorta a
-  `candidateMax`.
+  relaja a `overlap >= 1`). Se añade primero una receta "personalizada" con
+  exactamente los ingredientes matcheados, como comodín, salvo que ya exista
+  una receta con esos mismos ingredientes (sería el mismo plato repetido); en
+  ese caso su hueco lo ocupa otra receta. Se recorta a `candidateMax`.
 
 ## 6. Panel de administración (`admin.html`)
 

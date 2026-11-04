@@ -30,6 +30,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   o con red lenta, arranca desde caché (#5).
 
 ### Corregido
+- Correcciones menores (#22): la ronda 3 ya no propone "La vuestra (con
+  todo)" cuando una receta tiene exactamente esos ingredientes; los nombres
+  vacíos pasan a "Jugador N" y los guardados se recortan a `maxPlayers`
+  (y un `localStorage` corrupto ya no impide arrancar); si el navegador
+  cancela el gesto de arrastre (`pointercancel`), la carta vuelve a su sitio
+  sin quedarse enganchada. `PROJECT.md` §5 describía mal la ronda 1.
 - Admin: el borrador local ya no oculta para siempre los cambios de `/data`.
   Al abrir el admin se compara cada fichero con `/data`: lo que no has
   editado se actualiza solo y, si hay conflicto, un aviso permite usar la

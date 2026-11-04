@@ -86,8 +86,9 @@ export function buildBalancedPool(ingredients, config) {
 /**
  * Dado el conjunto de ids matcheados en la ronda anterior, propone recetas
  * candidatas: prioriza mayor solapamiento y menos ingredientes "extra" no
- * matcheados, y siempre añade una receta personalizada con exactamente los
- * ingredientes matcheados.
+ * matcheados, y añade primero una receta personalizada con exactamente los
+ * ingredientes matcheados (salvo que ya exista una receta con esos mismos
+ * ingredientes).
  */
 export function pickCandidates(matchedIds, recipes, config) {
   const matchedSet = new Set(matchedIds);
@@ -103,8 +104,17 @@ export function pickCandidates(matchedIds, recipes, config) {
     .filter((r) => r.overlap >= 1);
   scored.sort((a, b) => b.overlap - a.overlap || a.extra - b.extra);
 
-  let top = scored.filter((r) => r.overlap >= minOverlap).slice(0, max - 1);
-  if (top.length < 2) top = scored.slice(0, max - 1);
+  // Si una receta tiene exactamente los ingredientes matcheados, la
+  // personalizada sería el mismo plato repetido: se omite y su hueco lo
+  // ocupa otra receta. (Esa receta siempre queda primera: overlap máximo y
+  // extra 0, así que nunca se pierde en el recorte.)
+  const sameAsCustom = (r) => r.extra === 0 && new Set(r.ingredients).size === matchedSet.size;
+  const withCustom = !scored.some(sameAsCustom);
+  const slots = withCustom ? max - 1 : max;
+
+  let top = scored.filter((r) => r.overlap >= minOverlap).slice(0, slots);
+  if (top.length < 2) top = scored.slice(0, slots);
+  if (!withCustom) return top;
 
   const custom = { id: "custom", name: "La vuestra (con todo)", ingredients: [...matchedSet], custom: true };
   const merged = [custom, ...top].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i);

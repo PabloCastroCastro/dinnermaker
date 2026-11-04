@@ -131,9 +131,10 @@ describe("pickCandidates", () => {
   });
 
   test("caso normal: personalizada primero, luego por overlap desc y extra asc", () => {
-    const out = pickCandidates(["a", "b", "c"], recipes, config);
+    // "z" hace que ninguna receta coincida exactamente con lo matcheado.
+    const out = pickCandidates(["a", "b", "c", "z"], recipes, config);
     assert.equal(out[0].id, "custom");
-    assert.deepEqual(out[0].ingredients.sort(), ["a", "b", "c"]);
+    assert.deepEqual(out[0].ingredients.sort(), ["a", "b", "c", "z"]);
     // r1 (overlap 1) queda fuera porque hay >= 2 recetas con overlap >= minOverlap.
     assert.deepEqual(ids(out.slice(1)), ["r3", "r4", "r2b", "r2"]);
     for (const r of out.slice(1)) {
@@ -148,8 +149,32 @@ describe("pickCandidates", () => {
   });
 
   test("recorta a candidateMax contando la personalizada", () => {
-    const out = pickCandidates(["a", "b", "c"], recipes, { candidateMax: 3, candidateMinOverlap: 2 });
+    const out = pickCandidates(["a", "b", "c", "z"], recipes, { candidateMax: 3, candidateMinOverlap: 2 });
     assert.deepEqual(ids(out), ["custom", "r3", "r4"]);
+  });
+
+  test("si una receta coincide exactamente con lo matcheado, no se propone la personalizada", () => {
+    // r3 = [a, b, c]: la personalizada sería el mismo plato.
+    const out = pickCandidates(["a", "b", "c"], recipes, config);
+    assert.ok(!ids(out).includes("custom"));
+    assert.deepEqual(ids(out), ["r3", "r4", "r2b", "r2"]);
+  });
+
+  test("sin personalizada, su hueco lo ocupa otra receta (candidateMax completo)", () => {
+    const out = pickCandidates(["a", "b", "c"], recipes, { candidateMax: 3, candidateMinOverlap: 2 });
+    assert.deepEqual(ids(out), ["r3", "r4", "r2b"]);
+  });
+
+  test("la coincidencia exacta no depende del orden ni de repetidos en el match", () => {
+    for (const m of [["c", "a", "b"], ["b", "b", "a", "c"]]) {
+      assert.equal(pickCandidates(m, recipes, config)[0].id, "r3");
+    }
+  });
+
+  test("una receta que contiene todo lo matcheado y algo más no cuenta como idéntica", () => {
+    // r4 = [a, b, c, d] ⊃ [a, b, d]? No: con [a, b, d] r4 tiene extra 1 (c).
+    const out = pickCandidates(["a", "b", "d"], recipes, config);
+    assert.equal(out[0].id, "custom");
   });
 
   test("si hay menos de 2 recetas con overlap >= minOverlap, relaja a overlap >= 1", () => {
@@ -197,8 +222,15 @@ describe("pickCandidates", () => {
         if (matched.length === 0) matched.push(pool[0].id);
         const out = pickCandidates(matched, t.recipes, t.config);
         assert.ok(out.length >= 1 && out.length <= t.config.candidateMax);
-        assert.equal(out[0].id, "custom");
-        for (const c of out.slice(1)) {
+        const set = new Set(matched);
+        const identical = t.recipes.find((rc) => rc.ingredients.length === set.size && rc.ingredients.every((i) => set.has(i)));
+        if (identical) {
+          assert.ok(!ids(out).includes("custom"), "propone la personalizada habiendo una receta idéntica");
+          assert.equal(out[0].id, identical.id);
+        } else {
+          assert.equal(out[0].id, "custom");
+        }
+        for (const c of out.filter((x) => !x.custom)) {
           assert.ok(c.overlap >= 1);
           assert.ok(c.ingredients.every((id) => known.has(id)), `${c.id} referencia un ingrediente inexistente`);
         }
