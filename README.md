@@ -96,6 +96,18 @@ Cualquier hosting estático con HTTPS sirve, por ejemplo:
 Una vez desplegado, entra desde el móvil y usa "Añadir a pantalla de inicio"
 (o el banner de instalación que aparece solo en Chrome/Edge Android).
 
+### Publicar cambios de contenido o de código
+
+No hay que hacer nada especial: haz commit de los JSON de `/data` (o del
+código) y despliega. El service worker usa *network-first* para todo lo del
+propio sitio, así que quien abra la app con conexión ve la versión nueva en
+esa misma carga, también con la PWA instalada. Sin conexión (o si la red
+tarda más de 4 s) se usa la última versión guardada en el móvil, y se
+actualiza sola la próxima vez que haya red.
+
+No hace falta cambiar `CACHE_NAME` en `service-worker.js` para publicar
+cambios; ver `CONTRIBUTING.md` para los casos en que sí.
+
 ## Estructura
 
 ```

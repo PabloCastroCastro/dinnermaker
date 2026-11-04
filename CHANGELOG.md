@@ -13,7 +13,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   (`tests/data.test.mjs`: JSON válido, ids únicos, recetas sin ingredientes
   inexistentes, categorías con tope, `visualStyle` conocido) (#3).
 
+### Cambiado
+- Service worker: *network-first* (con timeout de 4 s) para todo lo del
+  propio sitio en vez de servir primero la caché, así los cambios en `/data`
+  y en el código se ven en la siguiente carga sin tocar `CACHE_NAME`. Sin red
+  o con red lenta, arranca desde caché (#5).
+
 ### Corregido
+- El service worker ya no guarda en caché respuestas de error (404/500), y
+  la app vuelve a arrancar sin conexión. El precache avisa en consola de qué
+  fichero falló en vez de silenciarlo (#5).
 - La ronda 2 ya no se queda en "Cargando…" si falla la carga del tipo de
   cena elegido: muestra el error con el fichero que falló y permite
   reintentar (sin perder la ronda 1) o volver al inicio (#19).
