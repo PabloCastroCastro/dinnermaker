@@ -30,6 +30,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   o con red lenta, arranca desde caché (#5).
 
 ### Corregido
+- Admin: el borrador local ya no oculta para siempre los cambios de `/data`.
+  Al abrir el admin se compara cada fichero con `/data`: lo que no has
+  editado se actualiza solo y, si hay conflicto, un aviso permite usar la
+  versión de `/data` o mantener el borrador. Si `/data` no carga, se muestra
+  un error con "Reintentar" en vez de una página en blanco (#21).
 - Admin, pestaña Reglas: ahora muestra un tope por cada categoría en uso
   (antes solo las que ya tenían tope, así que un tipo nuevo nunca podía
   tenerlos), permite quitar topes de categorías sin ingredientes y guardar
