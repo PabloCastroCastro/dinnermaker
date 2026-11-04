@@ -13,7 +13,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   (`tests/data.test.mjs`: JSON válido, ids únicos, recetas sin ingredientes
   inexistentes, categorías con tope, `visualStyle` conocido) (#3).
 
+### Añadido
+- Accesibilidad (#4): votar con las flechas ← → del teclado; foco gestionado
+  en cada pantalla y carta; anuncios por `aria-live` de turno, resumen y
+  resultado; anillo de foco visible; nombres accesibles en botones de icono,
+  inputs y cartas; los emojis pasan a ser decorativos y el nombre se muestra
+  siempre en texto (también en "También coincidisteis en" y en el admin);
+  chips del admin usables con teclado; `prefers-reduced-motion`.
+
 ### Cambiado
+- Contraste WCAG AA: botones rellenos `#E1472B` → `#C93A1F`, textos
+  secundarios a opacidad ≥ 0.62 y texto de error `#EE5C3F` (#4).
 - Service worker: *network-first* (con timeout de 4 s) para todo lo del
   propio sitio en vez de servir primero la caché, así los cambios en `/data`
   y en el código se ven en la siguiente carga sin tocar `CACHE_NAME`. Sin red

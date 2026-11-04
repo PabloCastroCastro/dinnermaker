@@ -1,5 +1,8 @@
 import { loadGameConfig, loadTypeData, esc, slugify, indexById } from "./shared.js";
 
+// Emoji decorativo: el nombre va siempre en texto al lado.
+const emo = (e) => `<span aria-hidden="true">${esc(e)}</span>`;
+
 const DRAFT_KEY = "dinnerMatchAdminDraft";
 const VISUAL_STYLES = ["round", "bowl", "stack"];
 
@@ -72,8 +75,8 @@ function currentType() { return state.typeCache[state.selectedTypeId]; }
 function typeSelectorHTML() {
   return `
   <div class="type-select-row">
-    <select class="select-input" id="type-selector">
-      ${state.dishTypes.map((t) => `<option value="${esc(t.id)}" ${t.id === state.selectedTypeId ? "selected" : ""}>${t.emoji} ${esc(t.name)}</option>`).join("")}
+    <select class="select-input" id="type-selector" aria-label="Tipo de cena">
+      ${state.dishTypes.map((t) => `<option value="${esc(t.id)}" ${t.id === state.selectedTypeId ? "selected" : ""}>${esc(t.emoji)} ${esc(t.name)}</option>`).join("")}
     </select>
     <span class="visual-badge">${esc(state.selectedTypeId || "")}</span>
   </div>`;
@@ -87,10 +90,10 @@ function dishTypeForm(dt) {
   <div class="card-panel" style="margin-bottom:14px;">
     <div class="row-label mono">${isNew ? "Nuevo tipo de cena" : "Editar tipo de cena"}</div>
     <div class="form-grid">
-      <input class="text-input" id="f-dt-name" placeholder="Nombre" value="${esc(v.name)}" />
-      <input class="text-input" id="f-dt-emoji" placeholder="Emoji" value="${esc(v.emoji)}" />
+      <input class="text-input" id="f-dt-name" placeholder="Nombre" aria-label="Nombre del tipo de cena" value="${esc(v.name)}" />
+      <input class="text-input" id="f-dt-emoji" placeholder="Emoji" aria-label="Emoji" value="${esc(v.emoji)}" />
     </div>
-    <select class="select-input" id="f-dt-visual">
+    <select class="select-input" id="f-dt-visual" aria-label="Estilo visual del plato">
       ${VISUAL_STYLES.map((s) => `<option value="${s}" ${s === v.visualStyle ? "selected" : ""}>${s}</option>`).join("")}
     </select>
     <p class="subtitle" style="text-align:left; margin: 4px 0 10px;">visualStyle controla cómo se dibuja el plato final: <b>round</b> (pizza/sushi), <b>bowl</b> (ensalada/pasta/sopa), <b>stack</b> (hamburguesa/tacos).</p>
@@ -104,11 +107,11 @@ function dishTypeForm(dt) {
 function dishTypesTab() {
   const rows = state.dishTypes.map((t) => `
     <div class="item-row">
-      <span class="emoji">${t.emoji}</span>
+      <span class="emoji" aria-hidden="true">${esc(t.emoji)}</span>
       <div class="meta"><div class="name">${esc(t.name)}</div><div class="sub">${esc(t.id)} · visual: ${esc(t.visualStyle)}</div></div>
       <div class="actions">
-        <button class="icon-btn" data-action="edit-dishtype" data-id="${esc(t.id)}">✎</button>
-        <button class="icon-btn danger" data-action="delete-dishtype" data-id="${esc(t.id)}">✕</button>
+        <button class="icon-btn" data-action="edit-dishtype" data-id="${esc(t.id)}" aria-label="Editar ${esc(t.name)}">${emo("✎")}</button>
+        <button class="icon-btn danger" data-action="delete-dishtype" data-id="${esc(t.id)}" aria-label="Eliminar ${esc(t.name)}">${emo("✕")}</button>
       </div>
     </div>`).join("");
   const formHTML = state.editingDishType === "new"
@@ -120,8 +123,8 @@ function dishTypesTab() {
   return `
     <div class="card-panel" style="margin-bottom:16px;">
       <div class="row-label mono">Ajustes globales</div>
-      <div class="config-row"><span>Jugadores mínimo</span><input class="text-input" style="margin:0;" id="gc-min" type="number" value="${gc.minPlayers}" /></div>
-      <div class="config-row"><span>Jugadores máximo</span><input class="text-input" style="margin:0;" id="gc-max" type="number" value="${gc.maxPlayers}" /></div>
+      <div class="config-row"><label for="gc-min">Jugadores mínimo</label><input class="text-input" style="margin:0;" id="gc-min" type="number" value="${gc.minPlayers}" /></div>
+      <div class="config-row"><label for="gc-max">Jugadores máximo</label><input class="text-input" style="margin:0;" id="gc-max" type="number" value="${gc.maxPlayers}" /></div>
       <button class="cta small" data-action="save-gameconfig">Guardar ajustes globales</button>
     </div>
     ${formHTML}
@@ -139,10 +142,10 @@ function ingredientForm(ing) {
   <div class="card-panel" style="margin-bottom:14px;">
     <div class="row-label mono">${isNew ? "Nuevo ingrediente" : "Editar ingrediente"}</div>
     <div class="form-grid">
-      <input class="text-input" id="f-name" placeholder="Nombre" value="${esc(v.name)}" />
-      <input class="text-input" id="f-emoji" placeholder="Emoji" value="${esc(v.emoji)}" />
+      <input class="text-input" id="f-name" placeholder="Nombre" aria-label="Nombre del ingrediente" value="${esc(v.name)}" />
+      <input class="text-input" id="f-emoji" placeholder="Emoji" aria-label="Emoji" value="${esc(v.emoji)}" />
     </div>
-    <input class="text-input" id="f-cat" placeholder="Categoría (ej. queso, vegetal...)" value="${esc(v.cat)}" />
+    <input class="text-input" id="f-cat" placeholder="Categoría (ej. queso, vegetal...)" aria-label="Categoría" value="${esc(v.cat)}" />
     <p class="subtitle" style="text-align:left; margin: 0 0 10px;">La categoría debe coincidir con una clave en las Reglas de este tipo para que el balanceo la tenga en cuenta.</p>
     <div style="display:flex; gap:8px;">
       <button class="cta small" data-action="save-ingredient" data-orig-id="${esc(v.id)}">Guardar</button>
@@ -156,11 +159,11 @@ function ingredientsTab() {
   if (!t) return `<p class="subtitle">Cargando…</p>`;
   const rows = t.ingredients.map((ing) => `
     <div class="item-row">
-      <span class="emoji">${ing.emoji}</span>
+      <span class="emoji" aria-hidden="true">${esc(ing.emoji)}</span>
       <div class="meta"><div class="name">${esc(ing.name)}</div><div class="sub">${esc(ing.cat)} · ${esc(ing.id)}</div></div>
       <div class="actions">
-        <button class="icon-btn" data-action="edit-ingredient" data-id="${esc(ing.id)}">✎</button>
-        <button class="icon-btn danger" data-action="delete-ingredient" data-id="${esc(ing.id)}">✕</button>
+        <button class="icon-btn" data-action="edit-ingredient" data-id="${esc(ing.id)}" aria-label="Editar ${esc(ing.name)}">${emo("✎")}</button>
+        <button class="icon-btn danger" data-action="delete-ingredient" data-id="${esc(ing.id)}" aria-label="Eliminar ${esc(ing.name)}">${emo("✕")}</button>
       </div>
     </div>`).join("");
   const formHTML = state.editingIngredient === "new"
@@ -183,14 +186,14 @@ function recipeForm(recipe) {
   const isNew = !recipe;
   const v = recipe || { id: "", name: "", ingredients: [] };
   const tags = t.ingredients.map((ing) => `
-    <span class="tag-toggle ${v.ingredients.includes(ing.id) ? "selected" : ""}" data-action="toggle-recipe-ing" data-id="${esc(ing.id)}">${ing.emoji} ${esc(ing.name)}</span>
+    <button type="button" class="tag-toggle ${v.ingredients.includes(ing.id) ? "selected" : ""}" aria-pressed="${v.ingredients.includes(ing.id)}" data-action="toggle-recipe-ing" data-id="${esc(ing.id)}">${emo(ing.emoji)} ${esc(ing.name)}</button>
   `).join("");
   return `
   <div class="card-panel" style="margin-bottom:14px;">
     <div class="row-label mono">${isNew ? "Nueva receta" : "Editar receta"}</div>
-    <input class="text-input" id="f-recipe-name" placeholder="Nombre" value="${esc(v.name)}" />
-    <div class="row-label mono">Ingredientes</div>
-    <div class="tag-wrap" id="recipe-ing-tags">${tags}</div>
+    <input class="text-input" id="f-recipe-name" placeholder="Nombre" aria-label="Nombre de la receta" value="${esc(v.name)}" />
+    <div class="row-label mono" id="recipe-ing-label">Ingredientes</div>
+    <div class="tag-wrap" id="recipe-ing-tags" role="group" aria-labelledby="recipe-ing-label">${tags}</div>
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button class="cta small" data-action="save-recipe" data-orig-id="${esc(v.id)}">Guardar</button>
       <button class="cta ghost small" data-action="cancel-recipe">Cancelar</button>
@@ -206,11 +209,11 @@ function recipesTab() {
     <div class="item-row">
       <div class="meta">
         <div class="name">${esc(r.name)}</div>
-        <div class="sub">${r.ingredients.map((id) => byId[id]?.emoji || "?").join(" ")} · ${r.ingredients.length} ingr.</div>
+        <div class="sub">${esc(r.ingredients.map((id) => byId[id]?.name || `¿${id}?`).join(", "))} · ${r.ingredients.length} ingr.</div>
       </div>
       <div class="actions">
-        <button class="icon-btn" data-action="edit-recipe" data-id="${esc(r.id)}">✎</button>
-        <button class="icon-btn danger" data-action="delete-recipe" data-id="${esc(r.id)}">✕</button>
+        <button class="icon-btn" data-action="edit-recipe" data-id="${esc(r.id)}" aria-label="Editar ${esc(r.name)}">${emo("✎")}</button>
+        <button class="icon-btn danger" data-action="delete-recipe" data-id="${esc(r.id)}" aria-label="Eliminar ${esc(r.name)}">${emo("✕")}</button>
       </div>
     </div>`).join("");
   const formHTML = state.editingRecipe === "new"
@@ -238,13 +241,13 @@ function configTab() {
   return `
     ${typeSelectorHTML()}
     <div class="card-panel">
-      <div class="config-row"><span>Tamaño del mazo de ingredientes</span><input class="text-input" style="margin:0;" id="cfg-pool" type="number" value="${c.ingredientPoolSize}" /></div>
-      <div class="config-row"><span>Recetas candidatas (máx)</span><input class="text-input" style="margin:0;" id="cfg-candmax" type="number" value="${c.candidateMax}" /></div>
-      <div class="config-row"><span>Solapamiento mínimo candidata</span><input class="text-input" style="margin:0;" id="cfg-candmin" type="number" value="${c.candidateMinOverlap}" /></div>
+      <div class="config-row"><label for="cfg-pool">Tamaño del mazo de ingredientes</label><input class="text-input" style="margin:0;" id="cfg-pool" type="number" value="${c.ingredientPoolSize}" /></div>
+      <div class="config-row"><label for="cfg-candmax">Recetas candidatas (máx)</label><input class="text-input" style="margin:0;" id="cfg-candmax" type="number" value="${c.candidateMax}" /></div>
+      <div class="config-row"><label for="cfg-candmin">Solapamiento mínimo candidata</label><input class="text-input" style="margin:0;" id="cfg-candmin" type="number" value="${c.candidateMinOverlap}" /></div>
     </div>
     <div class="row-label mono" style="margin-top:16px;">Tope de ingredientes por categoría</div>
     <div class="card-panel">
-      ${Object.keys(caps).map((cat) => `<div class="config-row"><span>${esc(cat)}</span><input class="text-input" style="margin:0;" data-cap-cat="${esc(cat)}" type="number" value="${caps[cat]}" /></div>`).join("") || `<p class="subtitle">Sin categorías todavía.</p>`}
+      ${Object.keys(caps).map((cat) => `<div class="config-row"><span>${esc(cat)}</span><input class="text-input" style="margin:0;" data-cap-cat="${esc(cat)}" aria-label="Tope de ${esc(cat)}" type="number" value="${caps[cat]}" /></div>`).join("") || `<p class="subtitle">Sin categorías todavía.</p>`}
       ${missing.length ? `<p class="subtitle" style="text-align:left; color:#E8A33D;">Categorías usadas en ingredientes pero sin tope definido: ${missing.map(esc).join(", ")}. Se incluirán con tope "sin límite" hasta que les pongas uno.</p>` : ""}
     </div>
     <button class="cta" data-action="save-config">Guardar reglas</button>
@@ -260,15 +263,15 @@ function render() {
   app.innerHTML = `
     <div class="screen admin-wrap">
       <div class="admin-top">
-        <span class="title display" style="font-size:24px;">⚙️ Configurar Dinner Match</span>
+        <h1 class="title display" style="font-size:24px;margin:0;">${emo("⚙️")} Configurar Dinner Match</h1>
         <a href="./index.html" class="cta ghost small" style="width:auto; margin:0; padding:8px 12px; text-decoration:none;">← Volver al juego</a>
       </div>
-      <div class="admin-nav">
-        <button class="${state.tab === "dishtypes" ? "active" : ""}" data-action="tab" data-tab="dishtypes">Tipos de cena</button>
-        <button class="${state.tab === "ingredients" ? "active" : ""}" data-action="tab" data-tab="ingredients">Ingredientes</button>
-        <button class="${state.tab === "recipes" ? "active" : ""}" data-action="tab" data-tab="recipes">Recetas</button>
-        <button class="${state.tab === "config" ? "active" : ""}" data-action="tab" data-tab="config">Reglas</button>
-      </div>
+      <nav class="admin-nav" aria-label="Secciones">
+        <button class="${state.tab === "dishtypes" ? "active" : ""}" aria-pressed="${state.tab === "dishtypes"}" data-action="tab" data-tab="dishtypes">Tipos de cena</button>
+        <button class="${state.tab === "ingredients" ? "active" : ""}" aria-pressed="${state.tab === "ingredients"}" data-action="tab" data-tab="ingredients">Ingredientes</button>
+        <button class="${state.tab === "recipes" ? "active" : ""}" aria-pressed="${state.tab === "recipes"}" data-action="tab" data-tab="recipes">Recetas</button>
+        <button class="${state.tab === "config" ? "active" : ""}" aria-pressed="${state.tab === "config"}" data-action="tab" data-tab="config">Reglas</button>
+      </nav>
       ${tabContent}
       <div class="row-label mono" style="margin-top:20px;">Exportar</div>
       <p class="subtitle" style="margin-bottom:10px; text-align:left;">Es un sitio estático: descarga estos ficheros y sustitúyelos en el repo para publicar los cambios (los del tipo van en <code>data/types/&lt;id&gt;/</code>).</p>
@@ -384,7 +387,10 @@ document.getElementById("app").addEventListener("click", async (e) => {
       saveDraft(); render();
     }
   }
-  else if (action === "toggle-recipe-ing") { btn.classList.toggle("selected"); }
+  else if (action === "toggle-recipe-ing") {
+    const on = btn.classList.toggle("selected");
+    btn.setAttribute("aria-pressed", String(on));
+  }
   else if (action === "save-recipe") {
     const t = currentType();
     const name = document.getElementById("f-recipe-name").value.trim();

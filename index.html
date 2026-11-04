@@ -18,11 +18,12 @@
 <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-<div id="app"></div>
-<div id="installBanner" class="install-banner" style="display:none;">
+<main id="app"></main>
+<div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<aside id="installBanner" class="install-banner" style="display:none;" aria-label="Instalar la app">
   <span>Instala Dinner Match en tu pantalla de inicio</span>
   <button id="installBtn">Instalar</button>
-</div>
+</aside>
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>
