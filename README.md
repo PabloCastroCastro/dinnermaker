@@ -20,6 +20,16 @@ python3 -m http.server 8080
 Abre `http://localhost:PORT` para el juego y `/admin.html` para el panel de
 configuración.
 
+## Tests
+
+La lógica de `js/shared.js` (balanceo del mazo, selección de platos
+candidatos, desempate de tipos) tiene tests con el runner nativo de Node, sin
+dependencias ni `npm install`. Requiere Node ≥ 22:
+
+```bash
+node --test
+```
+
 ## Configurar contenido
 
 Dos formas, sin tocar código JS:

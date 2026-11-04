@@ -37,8 +37,9 @@ Code, `CLAUDE.md` (convenciones que debe seguir).
 ## Cada cambio, paso a paso
 1. Cambios en tu rama `feature/GH-{numero}`. Si tocas contenido, hazlo en
    `/data/*.json`, no en JS.
-2. Verificación mínima antes de abrir PR:
+2. Verificación mínima antes de abrir PR (Node ≥ 22, sin `npm install`):
    ```bash
+   node --test   # tests de la lógica de js/shared.js, en tests/*.test.mjs
    node --input-type=module --check < js/app.js
    node --input-type=module --check < js/admin.js
    node --input-type=module --check < js/shared.js
