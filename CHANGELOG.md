@@ -30,6 +30,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   o con red lenta, arranca desde caché (#5).
 
 ### Corregido
+- Admin, pestaña Reglas: ahora muestra un tope por cada categoría en uso
+  (antes solo las que ya tenían tope, así que un tipo nuevo nunca podía
+  tenerlos), permite quitar topes de categorías sin ingredientes y guardar
+  `0` en `candidateMinOverlap` y en los topes. Los valores inválidos se
+  avisan en vez de sustituirse en silencio (#20).
+- Admin: los avisos (toasts) se anuncian a lectores de pantalla.
 - El service worker ya no guarda en caché respuestas de error (404/500), y
   la app vuelve a arrancar sin conexión. El precache avisa en consola de qué
   fichero falló en vez de silenciarlo (#5).
