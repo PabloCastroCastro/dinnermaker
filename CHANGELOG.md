@@ -30,6 +30,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   o con red lenta, arranca desde caché (#5).
 
 ### Corregido
+- Admin: el foco ya no se pierde al re-renderizar. Al cambiar de pestaña
+  queda en la pestaña; al abrir un formulario, en su primer campo; al
+  guardar o cancelar, en el ✎ de la fila; al borrar, en la fila siguiente;
+  en una validación fallida, en el campo que falta. El selector de tipo se
+  mantiene mientras carga (#35).
 - El banner de instalación ya no tapa el último botón en pantallas largas
   (el contenido reserva su altura mientras se ve) y se puede cerrar con ✕;
   el cierre se recuerda en este navegador (#34).

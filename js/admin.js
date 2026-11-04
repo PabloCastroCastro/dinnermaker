@@ -306,7 +306,7 @@ function ingredientForm(ing) {
 
 function ingredientsTab() {
   const t = currentType();
-  if (!t) return `<p class="subtitle">Cargando…</p>`;
+  if (!t) return `${typeSelectorHTML()}<p class="subtitle" role="status">Cargando…</p>`;
   const rows = t.ingredients.map((ing) => `
     <div class="item-row">
       <span class="emoji" aria-hidden="true">${esc(ing.emoji)}</span>
@@ -353,7 +353,7 @@ function recipeForm(recipe) {
 
 function recipesTab() {
   const t = currentType();
-  if (!t) return `<p class="subtitle">Cargando…</p>`;
+  if (!t) return `${typeSelectorHTML()}<p class="subtitle" role="status">Cargando…</p>`;
   const byId = indexById(t.ingredients);
   const rows = t.recipes.map((r) => `
     <div class="item-row">
@@ -383,7 +383,7 @@ function recipesTab() {
 // ---- Tab: Reglas (del tipo seleccionado) ----
 function configTab() {
   const t = currentType();
-  if (!t) return `<p class="subtitle">Cargando…</p>`;
+  if (!t) return `${typeSelectorHTML()}<p class="subtitle" role="status">Cargando…</p>`;
   const c = t.config;
   const caps = c.categoryCaps || {};
   const countByCat = {};
@@ -422,9 +422,42 @@ function configTab() {
   `;
 }
 
+// ---- Foco ----
+// render() reescribe #app con innerHTML y destruye el elemento con foco.
+// Por defecto se devuelve el foco a su equivalente tras repintar (mismo id o
+// mismo data-action + data-id/tab/cat). Las acciones que cambian de contexto
+// (pestaña, abrir/cerrar formulario, borrar) piden destino con focusNext().
+let focusRequest = null;
+const focusNext = (selector) => { focusRequest = selector; };
+const sel = (action, attrs = {}) => `[data-action="${action}"]` + Object.entries(attrs).map(([k, v]) => `[data-${k}="${CSS.escape(v)}"]`).join("");
+const FORMS = {
+  dishtype: { first: "#f-dt-name", editing: "editingDishType", list: () => state.dishTypes },
+  ingredient: { first: "#f-name", editing: "editingIngredient", list: () => currentType()?.ingredients || [] },
+  recipe: { first: "#f-recipe-name", editing: "editingRecipe", list: () => currentType()?.recipes || [] },
+};
+// A dónde vuelve el foco al cerrar un formulario: la fila editada (o creada)
+// o, si se canceló uno nuevo, el botón "+ Añadir".
+const afterForm = (kind, itemId) => (itemId ? sel(`edit-${kind}`, { id: itemId }) : sel(`new-${kind}`));
+// Tras borrar: la fila siguiente (o la anterior) o, si no queda ninguna, "+ Añadir".
+function afterDelete(kind, deletedId) {
+  const ids = FORMS[kind].list().map((x) => x.id);
+  const i = ids.indexOf(deletedId);
+  const neighbour = ids[i + 1] ?? ids[i - 1];
+  return neighbour ? sel(`edit-${kind}`, { id: neighbour }) : sel(`new-${kind}`);
+}
+function focusSelectorOf(el) {
+  if (!el || el === document.body || !el.closest("#app")) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (el.dataset.capCat !== undefined) return `[data-cap-cat="${CSS.escape(el.dataset.capCat)}"]`;
+  if (!el.dataset.action) return null;
+  const { tab, id, cat } = el.dataset;
+  return sel(el.dataset.action, Object.fromEntries(Object.entries({ tab, id, cat }).filter(([, v]) => v !== undefined)));
+}
+
 function render() {
   if (state.loadError) return renderLoadError();
   const app = document.getElementById("app");
+  const restoreSelector = focusSelectorOf(document.activeElement);
   const tabContent = state.tab === "dishtypes" ? dishTypesTab()
     : state.tab === "ingredients" ? ingredientsTab()
     : state.tab === "recipes" ? recipesTab()
@@ -457,6 +490,9 @@ function render() {
       <button class="cta ghost small" data-action="clear-draft">Descartar borrador y recargar de /data</button>
     </div>
   `;
+  const target = (focusRequest && app.querySelector(focusRequest)) || (restoreSelector && app.querySelector(restoreSelector));
+  focusRequest = null;
+  if (target && target !== document.activeElement) target.focus();
 }
 
 document.getElementById("app").addEventListener("change", (e) => {
@@ -475,17 +511,22 @@ document.getElementById("app").addEventListener("click", async (e) => {
 
   if (action === "tab") {
     state.tab = btn.dataset.tab;
+    focusNext(sel("tab", { tab: state.tab }));
     state.editingIngredient = null; state.editingRecipe = null; state.editingDishType = null;
     if (state.tab !== "dishtypes" && state.selectedTypeId) await ensureTypeLoaded(state.selectedTypeId);
     render();
   }
 
   // -- Dish types --
-  else if (action === "new-dishtype") { state.editingDishType = "new"; render(); }
-  else if (action === "edit-dishtype") { state.editingDishType = btn.dataset.id; render(); }
-  else if (action === "cancel-dishtype") { state.editingDishType = null; render(); }
+  else if (action === "new-dishtype") { state.editingDishType = "new"; focusNext(FORMS.dishtype.first); render(); }
+  else if (action === "edit-dishtype") { state.editingDishType = btn.dataset.id; focusNext(FORMS.dishtype.first); render(); }
+  else if (action === "cancel-dishtype") {
+    focusNext(afterForm("dishtype", state.editingDishType === "new" ? null : state.editingDishType));
+    state.editingDishType = null; render();
+  }
   else if (action === "delete-dishtype") {
     if (confirm("¿Eliminar este tipo de cena y todo su contenido (ingredientes/recetas)?")) {
+      focusNext(afterDelete("dishtype", btn.dataset.id));
       state.dishTypes = state.dishTypes.filter((t) => t.id !== btn.dataset.id);
       delete state.typeCache[btn.dataset.id];
       if (state.selectedTypeId === btn.dataset.id) state.selectedTypeId = state.dishTypes[0]?.id || null;
@@ -496,13 +537,15 @@ document.getElementById("app").addEventListener("click", async (e) => {
     const name = document.getElementById("f-dt-name").value.trim();
     const emoji = document.getElementById("f-dt-emoji").value.trim() || "🍽️";
     const visualStyle = document.getElementById("f-dt-visual").value;
-    if (!name) { toast("Falta el nombre"); return; }
+    if (!name) { toast("Falta el nombre"); document.getElementById("f-dt-name").focus(); return; }
     const origId = btn.dataset.origId;
     if (origId) {
       Object.assign(state.dishTypes.find((t) => t.id === origId), { name, emoji, visualStyle });
+      focusNext(afterForm("dishtype", origId));
     } else {
       let id = slugify(name);
       while (state.dishTypes.some((t) => t.id === id)) id += "2";
+      focusNext(afterForm("dishtype", id));
       state.dishTypes.push({ id, name, emoji, visualStyle });
       state.typeCache[id] = { ingredients: [], recipes: [], config: { ingredientPoolSize: 0, categoryCaps: {}, candidateMax: 6, candidateMinOverlap: 2 } };
       state.selectedTypeId = id;
@@ -517,12 +560,16 @@ document.getElementById("app").addEventListener("click", async (e) => {
   }
 
   // -- Ingredients --
-  else if (action === "new-ingredient") { state.editingIngredient = "new"; render(); }
-  else if (action === "edit-ingredient") { state.editingIngredient = btn.dataset.id; render(); }
-  else if (action === "cancel-ingredient") { state.editingIngredient = null; render(); }
+  else if (action === "new-ingredient") { state.editingIngredient = "new"; focusNext(FORMS.ingredient.first); render(); }
+  else if (action === "edit-ingredient") { state.editingIngredient = btn.dataset.id; focusNext(FORMS.ingredient.first); render(); }
+  else if (action === "cancel-ingredient") {
+    focusNext(afterForm("ingredient", state.editingIngredient === "new" ? null : state.editingIngredient));
+    state.editingIngredient = null; render();
+  }
   else if (action === "delete-ingredient") {
     if (confirm("¿Eliminar este ingrediente? También se quitará de las recetas que lo usen.")) {
       const t = currentType();
+      focusNext(afterDelete("ingredient", btn.dataset.id));
       t.ingredients = t.ingredients.filter((i) => i.id !== btn.dataset.id);
       t.recipes = t.recipes.map((r) => ({ ...r, ingredients: r.ingredients.filter((id) => id !== btn.dataset.id) }));
       saveDraft(); render();
@@ -533,13 +580,15 @@ document.getElementById("app").addEventListener("click", async (e) => {
     const name = document.getElementById("f-name").value.trim();
     const emoji = document.getElementById("f-emoji").value.trim() || "🍽️";
     const cat = document.getElementById("f-cat").value.trim() || "otros";
-    if (!name) { toast("Falta el nombre"); return; }
+    if (!name) { toast("Falta el nombre"); document.getElementById("f-name").focus(); return; }
     const origId = btn.dataset.origId;
     if (origId) {
       Object.assign(t.ingredients.find((i) => i.id === origId), { name, emoji, cat });
+      focusNext(afterForm("ingredient", origId));
     } else {
       let id = slugify(name);
       while (t.ingredients.some((i) => i.id === id)) id += "2";
+      focusNext(afterForm("ingredient", id));
       t.ingredients.push({ id, name, emoji, cat });
     }
     state.editingIngredient = null;
@@ -547,12 +596,16 @@ document.getElementById("app").addEventListener("click", async (e) => {
   }
 
   // -- Recipes --
-  else if (action === "new-recipe") { state.editingRecipe = "new"; render(); }
-  else if (action === "edit-recipe") { state.editingRecipe = btn.dataset.id; render(); }
-  else if (action === "cancel-recipe") { state.editingRecipe = null; render(); }
+  else if (action === "new-recipe") { state.editingRecipe = "new"; focusNext(FORMS.recipe.first); render(); }
+  else if (action === "edit-recipe") { state.editingRecipe = btn.dataset.id; focusNext(FORMS.recipe.first); render(); }
+  else if (action === "cancel-recipe") {
+    focusNext(afterForm("recipe", state.editingRecipe === "new" ? null : state.editingRecipe));
+    state.editingRecipe = null; render();
+  }
   else if (action === "delete-recipe") {
     if (confirm("¿Eliminar esta receta?")) {
       const t = currentType();
+      focusNext(afterDelete("recipe", btn.dataset.id));
       t.recipes = t.recipes.filter((r) => r.id !== btn.dataset.id);
       saveDraft(); render();
     }
@@ -565,14 +618,16 @@ document.getElementById("app").addEventListener("click", async (e) => {
     const t = currentType();
     const name = document.getElementById("f-recipe-name").value.trim();
     const selected = [...document.querySelectorAll("#recipe-ing-tags .tag-toggle.selected")].map((el) => el.dataset.id);
-    if (!name) { toast("Falta el nombre"); return; }
-    if (selected.length === 0) { toast("Selecciona al menos un ingrediente"); return; }
+    if (!name) { toast("Falta el nombre"); document.getElementById("f-recipe-name").focus(); return; }
+    if (selected.length === 0) { toast("Selecciona al menos un ingrediente"); document.querySelector("#recipe-ing-tags .tag-toggle")?.focus(); return; }
     const origId = btn.dataset.origId;
     if (origId) {
       Object.assign(t.recipes.find((r) => r.id === origId), { name, ingredients: selected });
+      focusNext(afterForm("recipe", origId));
     } else {
       let id = slugify(name);
       while (t.recipes.some((r) => r.id === id)) id += "2";
+      focusNext(afterForm("recipe", id));
       t.recipes.push({ id, name, ingredients: selected });
     }
     state.editingRecipe = null;
@@ -641,8 +696,8 @@ document.getElementById("app").addEventListener("click", async (e) => {
       state.selectedTypeId = state.dishTypes[0]?.id || null;
     }
     state.draftNotice = null;
+    focusNext(sel("tab", { tab: state.tab }));
     saveDraft(); render();
-    document.querySelector(".admin-nav button.active")?.focus();
     toast("Cargada la versión de /data en esos ficheros");
   }
   else if (action === "notice-keep") {
@@ -658,8 +713,8 @@ document.getElementById("app").addEventListener("click", async (e) => {
     }
     state.draftNotice = null;
     if (n.kind !== "unchecked") saveDraft();
+    focusNext(sel("tab", { tab: state.tab }));
     render();
-    document.querySelector(".admin-nav button.active")?.focus();
     toast(n.kind === "unchecked" ? "Trabajando sobre el borrador" : "Borrador mantenido");
   }
 

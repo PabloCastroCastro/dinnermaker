@@ -105,7 +105,10 @@ Sigue la paleta y componentes ya definidos en `css/style.css`.
 - **Foco**: no pongas `outline: none` sin alternativa; el anillo común es
   `:focus-visible`. En `js/app.js`, marca con `data-autofocus` el control
   que debe recibir el foco al llegar a una pantalla, y con `data-announce`
-  el texto que se lee por la región `aria-live`.
+  el texto que se lee por la región `aria-live`. En `js/admin.js`, `render()`
+  devuelve el foco a su equivalente tras repintar; si una acción cambia de
+  contexto (abrir/cerrar formulario, borrar, cambiar de pestaña), indica el
+  destino con `focusNext(selector)` antes de `render()`.
 - Inputs con `<label>` o `aria-label`; controles conmutables como
   `<button aria-pressed>`, no `<span>` clicables. Si necesitas
 justificar una decisión de diseño no trivial, documenta el porqué en el
