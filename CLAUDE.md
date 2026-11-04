@@ -65,12 +65,14 @@ manteniendo ambas cosas sincronizadas.
   (Fredoka + Work Sans + Space Mono; tonos carbón/terracota/mostaza). Si
   añades UI nueva, reutiliza las clases existentes (`.cta`, `.card-panel`,
   `.chip`, etc.) antes de crear clases nuevas.
-- **Verificación rápida sin test runner todavía** (hasta que se resuelva el
-  issue de testing):
+- **Verificación antes de abrir PR** (requiere Node ≥ 22, sin dependencias):
   ```bash
+  node --test                                   # tests de js/shared.js (tests/*.test.mjs)
   node --input-type=module --check < js/app.js
   python3 -c "import json,glob; [json.load(open(f)) for f in glob.glob('data/*.json')]"
   ```
+  Si cambias `buildBalancedPool`, `pickCandidates` o `resolveDishType`,
+  añade o ajusta tests en `tests/shared.test.mjs`.
 
 ## Cómo correr en local
 

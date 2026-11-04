@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Añadido
+- Tests de `buildBalancedPool`, `pickCandidates`, `resolveDishType` y
+  `shuffle` con `node:test` (`tests/shared.test.mjs`), incluyendo
+  comprobaciones sobre los datos reales de `data/types/` (#2).
+
 ### Corregido
 - La ronda 2 ya no se queda en "Cargando…" si falla la carga del tipo de
   cena elegido: muestra el error con el fichero que falló y permite
