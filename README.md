@@ -1,5 +1,7 @@
 # Dinner Match 🍽️
 
+[![CI](https://github.com/PabloCastroCastro/dinnermaker/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/PabloCastroCastro/dinnermaker/actions/workflows/ci.yml)
+
 Decide la cena del grupo sin discutir. Tres rondas de swipe tipo Tinder:
 tipo de cena primero (pizza, hamburguesa, ensalada...), sus ingredientes
 después, y el plato final al terminar. Ver [`PROJECT.md`](./PROJECT.md)
@@ -23,12 +25,17 @@ configuración.
 ## Tests
 
 La lógica de `js/shared.js` (balanceo del mazo, selección de platos
-candidatos, desempate de tipos) tiene tests con el runner nativo de Node, sin
-dependencias ni `npm install`. Requiere Node ≥ 22:
+candidatos, desempate de tipos) y la integridad del contenido de `/data`
+(JSON válido, ids únicos, recetas sin ingredientes inexistentes, topes por
+categoría) tienen tests con el runner nativo de Node, sin dependencias ni
+`npm install`. Requiere Node ≥ 22:
 
 ```bash
 node --test
 ```
+
+La CI de GitHub Actions corre esto mismo (más `node --check` sobre el JS) en
+cada PR y en cada push a `main`/`develop`.
 
 ## Configurar contenido
 

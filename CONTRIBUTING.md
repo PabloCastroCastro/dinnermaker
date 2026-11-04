@@ -39,12 +39,13 @@ Code, `CLAUDE.md` (convenciones que debe seguir).
    `/data/*.json`, no en JS.
 2. Verificación mínima antes de abrir PR (Node ≥ 22, sin `npm install`):
    ```bash
-   node --test   # tests de la lógica de js/shared.js, en tests/*.test.mjs
+   node --test   # tests de js/shared.js + integridad de /data (tests/*.test.mjs)
    node --input-type=module --check < js/app.js
    node --input-type=module --check < js/admin.js
    node --input-type=module --check < js/shared.js
-   python3 -c "import json,glob; [json.load(open(f)) for f in glob.glob('data/*.json')]"
    ```
+   La CI (`.github/workflows/ci.yml`) corre lo mismo en cada PR; no
+   mergees con la CI en rojo.
 3. Sirve la app en local y pruébala de verdad (`python3 -m http.server 8080`)
    antes de pedir review — la mayoría de bugs de este proyecto son de UI/estado,
    no se ven solo leyendo el diff.
