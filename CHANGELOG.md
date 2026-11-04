@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 ## [Sin publicar]
 
 ### Añadido
+- Licencia MIT (`LICENSE`) y metadatos del repo en GitHub: descripción,
+  web (GitHub Pages) y topics (#28).
 - Tests de `buildBalancedPool`, `pickCandidates`, `resolveDishType` y
   `shuffle` con `node:test` (`tests/shared.test.mjs`), incluyendo
   comprobaciones sobre los datos reales de `data/types/` (#2).
@@ -12,8 +14,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   y `node --test`, que ahora incluye la validación de `/data`
   (`tests/data.test.mjs`: JSON válido, ids únicos, recetas sin ingredientes
   inexistentes, categorías con tope, `visualStyle` conocido) (#3).
-
-### Añadido
 - Accesibilidad (#4): votar con las flechas ← → del teclado; foco gestionado
   en cada pantalla y carta; anuncios por `aria-live` de turno, resumen y
   resultado; anillo de foco visible; nombres accesibles en botones de icono,
