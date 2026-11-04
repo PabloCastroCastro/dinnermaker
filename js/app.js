@@ -68,6 +68,7 @@ function setNumPlayersClamped(n) {
   while (state.names.length < c) state.names.push(`Jugador ${state.names.length + 1}`);
   state.names = state.names.slice(0, c);
   render();
+  announce(`${c} jugadores`);
 }
 
 function startRound1() {
@@ -193,6 +194,15 @@ document.addEventListener("pointerup", () => {
 });
 
 // ---- Render pieces ----
+// Accesibilidad:
+// - Los emojis son decorativos (aria-hidden): el nombre siempre va en texto.
+// - [data-autofocus] recibe el foco al cambiar de pantalla (o de carta), para
+//   que teclado y lectores de pantalla sigan el flujo sin perderse en <body>.
+// - [data-announce] es lo que se lee por la región aria-live al llegar a una
+//   pantalla (turno, resumen de ronda, resultado).
+const emo = (e) => `<span aria-hidden="true">${esc(e)}</span>`;
+const namesOf = (ings) => ings.map((i) => i.name).join(", ");
+
 function dishVisualHTML(ingredients, style, size = 240) {
   const toppings = ingredients.map((ing, i) => {
     const h = hashStr(ing.id);
@@ -200,13 +210,15 @@ function dishVisualHTML(ingredients, style, size = 240) {
     const radius = 22 + (h % 55);
     const left = 50 + radius * Math.cos(angle) * 0.42;
     const top = 50 + radius * Math.sin(angle) * 0.42;
-    return `<span class="topping" style="left:${left}%;top:${top}%">${ing.emoji}</span>`;
+    return `<span class="topping" style="left:${left}%;top:${top}%">${esc(ing.emoji)}</span>`;
   }).join("");
-  return `<div class="pizza-wrap dish-visual ${style}" style="width:${size}px;height:${size}px;"><div class="plate-bg"></div><div class="plate-fill"></div>${toppings}</div>`;
+  return `<div class="pizza-wrap dish-visual ${esc(style)}" aria-hidden="true" style="width:${size}px;height:${size}px;"><div class="plate-bg"></div><div class="plate-fill"></div>${toppings}</div>`;
 }
 
+const chipsHTML = (ings) => `<ul class="chip-list">${ings.map((ing) => `<li class="chip">${emo(ing.emoji)}${esc(ing.name)}</li>`).join("")}</ul>`;
+
 function renderLoading() {
-  return `<div class="screen"><p class="subtitle">Cargando…</p></div>`;
+  return `<div class="screen"><p class="subtitle" role="status">Cargando…</p></div>`;
 }
 function renderError() {
   const hint = location.protocol === "file:"
@@ -214,33 +226,33 @@ function renderError() {
     : "";
   return `
   <div class="screen">
-    <div class="error-box">${esc(state.errorTitle)}<br>${esc(state.errorMsg)}${hint}</div>
-    <button class="cta" data-action="retry" style="margin-top:16px;">⟳ Reintentar</button>
-    ${state.errorRetry === "round2" ? `<button class="cta ghost" data-action="reset" style="margin-top:10px;">↺ Volver al inicio</button>` : ""}
+    <div class="error-box" role="alert">${esc(state.errorTitle)}<br>${esc(state.errorMsg)}${hint}</div>
+    <button class="cta" data-action="retry" data-autofocus style="margin-top:16px;">${emo("⟳")} Reintentar</button>
+    ${state.errorRetry === "round2" ? `<button class="cta ghost" data-action="reset" style="margin-top:10px;">${emo("↺")} Volver al inicio</button>` : ""}
   </div>`;
 }
 
 function renderSetup() {
   return `
   <div class="screen">
-    <div class="logo-row">🍽️<span class="title display">Dinner Match</span></div>
+    <h1 class="logo-row">${emo("🍽️")}<span class="title display">Dinner Match</span></h1>
     <p class="subtitle">Tres rondas: primero el tipo de cena, luego sus ingredientes, y por último el plato concreto.</p>
     <div class="card-panel">
-      <div class="row-label mono">Jugadores</div>
-      <div class="stepper">
-        <button class="step-btn" data-action="dec-players">−</button>
+      <div class="row-label mono" id="players-label">Jugadores</div>
+      <div class="stepper" role="group" aria-labelledby="players-label">
+        <button class="step-btn" data-action="dec-players" aria-label="Quitar jugador" ${state.numPlayers <= gameConfig.minPlayers ? "disabled" : ""}>−</button>
         <span class="step-count">${state.numPlayers}</span>
-        <button class="step-btn" data-action="inc-players">+</button>
+        <button class="step-btn" data-action="inc-players" aria-label="Añadir jugador" ${state.numPlayers >= gameConfig.maxPlayers ? "disabled" : ""}>+</button>
       </div>
       <div class="row-label mono">Nombres</div>
-      ${state.names.map((n, i) => `<input class="name-input" data-name-idx="${i}" maxlength="16" value="${esc(n)}" />`).join("")}
+      ${state.names.map((n, i) => `<input class="name-input" data-name-idx="${i}" maxlength="16" value="${esc(n)}" aria-label="Nombre del jugador ${i + 1}" />`).join("")}
       <div class="row-label mono" style="margin-top:14px;">Tipos de cena en juego</div>
-      <div class="chip-list" style="margin-bottom:0;">
-        ${dishTypes.map((t) => `<div class="chip">${t.emoji}${esc(t.name)}</div>`).join("")}
-      </div>
+      <ul class="chip-list" style="margin-bottom:0;">
+        ${dishTypes.map((t) => `<li class="chip">${emo(t.emoji)}${esc(t.name)}</li>`).join("")}
+      </ul>
     </div>
-    <button class="cta" data-action="start-round1">🍽️ Empezar ronda 1</button>
-    <a href="./admin.html" class="cta ghost small" style="text-decoration:none; text-align:center;">⚙️ Configurar tipos, ingredientes y recetas</a>
+    <button class="cta" data-action="start-round1" data-autofocus>${emo("🍽️")} Empezar ronda 1</button>
+    <a href="./admin.html" class="cta ghost small" style="text-decoration:none; text-align:center;">${emo("⚙️")} Configurar tipos, ingredientes y recetas</a>
   </div>`;
 }
 
@@ -252,21 +264,22 @@ function roundLabel() {
 }
 
 function renderHandoff() {
+  const typeName = esc(state.dishTypeResult?.chosen?.name || "");
   const sub = state.round === 1
     ? "Pasa el móvil y toca cuando estés listo/a. Nadie más debería ver tus elecciones."
     : state.round === 2
-      ? `Ahora vas a votar ingredientes de ${state.dishTypeResult.chosen.name}.`
-      : `Ahora vas a votar platos completos de ${state.dishTypeResult.chosen.name} propuestos a partir de la ronda anterior.`;
+      ? `Ahora vas a votar ingredientes de ${typeName}.`
+      : `Ahora vas a votar platos completos de ${typeName} propuestos a partir de la ronda anterior.`;
   const color = PLAYER_COLORS[state.playerIdx % PLAYER_COLORS.length];
   const name = state.names[state.playerIdx] || "?";
   return `
   <div class="screen">
-    <div class="round-pill">${roundLabel()}</div>
+    <div class="round-pill" data-announce>${esc(roundLabel())}</div>
     <div class="player-tag mono">Jugador ${state.playerIdx + 1} de ${state.numPlayers}</div>
-    <div class="avatar" style="background:${color}">${esc(name.charAt(0).toUpperCase() || "?")}</div>
-    <div class="handoff-title display">Turno de ${esc(name)}</div>
+    <div class="avatar" aria-hidden="true" style="background:${color}">${esc(name.charAt(0).toUpperCase() || "?")}</div>
+    <h1 class="handoff-title display" data-announce>Turno de ${esc(name)}</h1>
     <div class="handoff-sub">${sub}</div>
-    <button class="cta" data-action="begin-turn">Estoy listo/a →</button>
+    <button class="cta" data-action="begin-turn" data-autofocus>Estoy listo/a ${emo("→")}</button>
   </div>`;
 }
 
@@ -275,38 +288,45 @@ function renderSwipe() {
   if (!currentCard) return `<div class="screen"></div>`;
   const nextCard = state.deck[state.cardIdx + 1];
   const simpleCard = state.round === 1 || state.round === 2;
+  const pos = `${state.cardIdx + 1} de ${state.deck.length}`;
 
   const behindHTML = nextCard ? (
     simpleCard
-      ? `<div class="ing-card behind"><div class="ing-emoji">${nextCard.emoji}</div><div class="ing-name display">${esc(nextCard.name)}</div></div>`
-      : `<div class="ing-card behind"><div class="pizza-card-name display">${esc(nextCard.name)}</div></div>`
+      ? `<div class="ing-card behind" aria-hidden="true"><div class="ing-emoji">${esc(nextCard.emoji)}</div><div class="ing-name display">${esc(nextCard.name)}</div></div>`
+      : `<div class="ing-card behind" aria-hidden="true"><div class="pizza-card-name display">${esc(nextCard.name)}</div></div>`
   ) : "";
 
+  const recipeIngs = simpleCard ? [] : ingObjs(currentCard.ingredients, typeData.ingById);
   const topInner = simpleCard
-    ? `<div class="ing-emoji">${currentCard.emoji}</div><div class="ing-name display">${esc(currentCard.name)}</div>`
+    ? `<div class="ing-emoji" aria-hidden="true">${esc(currentCard.emoji)}</div><div class="ing-name display">${esc(currentCard.name)}</div>`
     : `<div class="pizza-card-name display">${esc(currentCard.name)}</div>
-       <div class="pizza-ing-grid">${ingObjs(currentCard.ingredients, typeData.ingById).map((ing) => `<span class="pizza-ing-chip">${ing.emoji}${esc(ing.name)}</span>`).join("")}</div>
+       <div class="pizza-ing-grid">${recipeIngs.map((ing) => `<span class="pizza-ing-chip">${emo(ing.emoji)}${esc(ing.name)}</span>`).join("")}</div>
        ${currentCard.custom ? `<div class="custom-tag">Todo lo de la ronda anterior</div>` : ""}`;
+  const cardLabel = simpleCard
+    ? `${currentCard.name}. Carta ${pos}`
+    : `${currentCard.name}: ${namesOf(recipeIngs)}. Carta ${pos}`;
 
   return `
   <div class="screen">
+    <h1 class="sr-only">${esc(roundLabel())}: turno de ${esc(state.names[state.playerIdx])}</h1>
     <div class="swipe-top">
       <span class="count-label mono">${esc(state.names[state.playerIdx])} · ${state.cardIdx + 1}/${state.deck.length}</span>
-      <div class="progress-track"><div class="progress-fill" style="width:${(state.cardIdx / state.deck.length) * 100}%"></div></div>
+      <div class="progress-track" role="progressbar" aria-label="Cartas votadas" aria-valuemin="0" aria-valuemax="${state.deck.length}" aria-valuenow="${state.cardIdx}"><div class="progress-fill" style="width:${(state.cardIdx / state.deck.length) * 100}%"></div></div>
     </div>
     <div class="stack">
       ${behindHTML}
-      <div class="ing-card top" data-action="card">
-        <div class="stamp yes display">SÍ</div>
-        <div class="stamp no display">NO</div>
+      <div class="ing-card top" data-action="card" tabindex="0" role="group" aria-roledescription="carta"
+           aria-label="${esc(cardLabel)}" aria-describedby="swipe-hint" data-autofocus>
+        <div class="stamp yes display" aria-hidden="true">SÍ</div>
+        <div class="stamp no display" aria-hidden="true">NO</div>
         ${topInner}
       </div>
     </div>
     <div class="swipe-btns">
-      <button class="round-btn no" data-action="swipe-no">✕</button>
-      <button class="round-btn yes" data-action="swipe-yes">♥</button>
+      <button class="round-btn no" data-action="swipe-no" aria-label="No" aria-keyshortcuts="ArrowLeft">${emo("✕")}</button>
+      <button class="round-btn yes" data-action="swipe-yes" aria-label="Sí" aria-keyshortcuts="ArrowRight">${emo("♥")}</button>
     </div>
-    <div class="hint">Desliza la carta o usa los botones</div>
+    <div class="hint" id="swipe-hint">Desliza la carta, usa los botones o las flechas ← (no) y → (sí) del teclado</div>
   </div>`;
 }
 
@@ -316,75 +336,100 @@ function renderSummary1() {
     return `
     <div class="screen">
       <div class="round-pill">Ronda 1 completada</div>
-      <div class="result-title display">Sin coincidencias…</div>
-      <div class="result-sub">No hubo ni un tipo de cena en el que todos dijerais que sí.</div>
-      <button class="cta" data-action="reset">↺ Jugar otra ronda</button>
+      <h1 class="result-title display" data-announce>Sin coincidencias…</h1>
+      <div class="result-sub" data-announce>No hubo ni un tipo de cena en el que todos dijerais que sí.</div>
+      <button class="cta" data-action="reset" data-autofocus>${emo("↺")} Jugar otra ronda</button>
     </div>`;
   }
   const r = state.dishTypeResult;
   return `
   <div class="screen">
     <div class="round-pill">Ronda 1 completada</div>
-    <div class="result-title display">Toca ${esc(r.chosen.name)} ${r.chosen.emoji}</div>
-    <div class="result-sub">
+    <h1 class="result-title display" data-announce>Toca ${esc(r.chosen.name)} ${emo(r.chosen.emoji)}</h1>
+    <div class="result-sub" data-announce>
       ${state.round1Matches.length > 1
-        ? `Coincidisteis en ${state.round1Matches.length} tipos (${state.round1Matches.map((t) => t.name).join(", ")}) — sorteado entre ellos.`
+        ? `Coincidisteis en ${state.round1Matches.length} tipos (${esc(state.round1Matches.map((t) => t.name).join(", "))}) — sorteado entre ellos.`
         : `Los ${state.numPlayers} coincidisteis en este tipo de cena.`}
     </div>
-    <button class="cta" data-action="start-round2">✨ Ver ingredientes de ${esc(r.chosen.name)}</button>
-    <button class="cta ghost" data-action="reset" style="margin-top:10px;">↺ Empezar de cero</button>
+    <button class="cta" data-action="start-round2" data-autofocus>${emo("✨")} Ver ingredientes de ${esc(r.chosen.name)}</button>
+    <button class="cta ghost" data-action="reset" style="margin-top:10px;">${emo("↺")} Empezar de cero</button>
   </div>`;
 }
 
 function renderSummary2() {
   const has = state.round2Matches.length > 0;
-  const typeName = state.dishTypeResult.chosen.name;
+  const typeName = esc(state.dishTypeResult.chosen.name);
   return `
   <div class="screen">
     <div class="round-pill">Ronda 2 completada</div>
-    <div class="result-title display">${has ? "Ingredientes en común" : "Sin coincidencias…"}</div>
-    <div class="result-sub">${has
-      ? `Los ${state.numPlayers} coincidisteis en ${state.round2Matches.length} ingrediente${state.round2Matches.length > 1 ? "s" : ""} de ${typeName}. Ahora toca elegir el plato.`
+    <h1 class="result-title display" data-announce>${has ? "Ingredientes en común" : "Sin coincidencias…"}</h1>
+    <div class="result-sub" data-announce>${has
+      ? `Los ${state.numPlayers} coincidisteis en ${state.round2Matches.length} ingrediente${state.round2Matches.length > 1 ? "s" : ""} de ${typeName}: ${esc(namesOf(state.round2Matches))}. Ahora toca elegir el plato.`
       : `No hubo ni un ingrediente de ${typeName} en el que todos dijerais que sí.`}</div>
     ${has ? `
-      <div class="chip-list">${state.round2Matches.map((ing) => `<div class="chip">${ing.emoji}${esc(ing.name)}</div>`).join("")}</div>
-      <button class="cta" data-action="start-round3">✨ Ver propuestas de ${esc(typeName)}</button>
-      <button class="cta ghost" data-action="reset" style="margin-top:10px;">↺ Empezar de cero</button>
-    ` : `<button class="cta" data-action="reset">↺ Jugar otra ronda</button>`}
+      ${chipsHTML(state.round2Matches)}
+      <button class="cta" data-action="start-round3" data-autofocus>${emo("✨")} Ver propuestas de ${typeName}</button>
+      <button class="cta ghost" data-action="reset" style="margin-top:10px;">${emo("↺")} Empezar de cero</button>
+    ` : `<button class="cta" data-action="reset" data-autofocus>${emo("↺")} Jugar otra ronda</button>`}
   </div>`;
 }
 
 function renderResults() {
   const has = state.round3Matches.length > 0;
   const style = state.dishTypeResult.chosen.visualStyle || "round";
+  const typeName = esc(state.dishTypeResult.chosen.name);
   if (!has) {
     return `
     <div class="screen">
       <div class="round-pill">Ronda 3 completada</div>
-      <div class="result-title display">Tampoco hubo acuerdo…</div>
-      <div class="result-sub">Ninguna propuesta de ${esc(state.dishTypeResult.chosen.name)} convenció a todo el grupo.</div>
+      <h1 class="result-title display" data-announce>Tampoco hubo acuerdo…</h1>
+      <div class="result-sub" data-announce>Ninguna propuesta de ${typeName} convenció a todo el grupo.</div>
       <div class="empty-msg">Consuelo: esto era lo que teníais en común en la ronda de ingredientes.</div>
       ${dishVisualHTML(state.round2Matches, style, 200)}
-      <button class="cta" data-action="reset">↺ Jugar otra ronda</button>
+      ${chipsHTML(state.round2Matches)}
+      <button class="cta" data-action="reset" data-autofocus>${emo("↺")} Jugar otra ronda</button>
     </div>`;
   }
   const main = state.round3Matches[0];
+  const mainIngs = ingObjs(main.ingredients, typeData.ingById);
   const rest = state.round3Matches.slice(1);
   return `
   <div class="screen">
     <div class="round-pill">Ronda 3 completada</div>
-    <div class="result-title display">¡Esta es vuestra cena!</div>
-    <div class="result-sub">Coincidisteis los ${state.numPlayers} en ${state.round3Matches.length} propuesta${state.round3Matches.length > 1 ? "s" : ""} de ${esc(state.dishTypeResult.chosen.name)}.</div>
-    ${dishVisualHTML(ingObjs(main.ingredients, typeData.ingById), style)}
-    <div class="pizza-card-name display" style="margin-bottom:16px;">${esc(main.name)}</div>
-    <div class="chip-list">${ingObjs(main.ingredients, typeData.ingById).map((ing) => `<div class="chip">${ing.emoji}${esc(ing.name)}</div>`).join("")}</div>
+    <h1 class="result-title display" data-announce>¡Esta es vuestra cena!</h1>
+    <div class="result-sub">Coincidisteis los ${state.numPlayers} en ${state.round3Matches.length} propuesta${state.round3Matches.length > 1 ? "s" : ""} de ${typeName}.</div>
+    ${dishVisualHTML(mainIngs, style)}
+    <h2 class="pizza-card-name display" style="margin-bottom:16px;" data-announce>${esc(main.name)}</h2>
+    ${chipsHTML(mainIngs)}
     ${rest.length > 0 ? `
-      <div class="section-title">También coincidisteis en</div>
-      <div class="extra-pizza-row">
-        ${rest.map((r) => `<div class="extra-pizza"><span class="extra-pizza-name">${esc(r.name)}</span><span class="extra-pizza-emojis">${ingObjs(r.ingredients, typeData.ingById).map((i) => i.emoji).join(" ")}</span></div>`).join("")}
-      </div>` : ""}
-    <button class="cta" data-action="reset">↺ Jugar otra ronda</button>
+      <h2 class="section-title">También coincidisteis en</h2>
+      <ul class="extra-pizza-row">
+        ${rest.map((r) => {
+          const ings = ingObjs(r.ingredients, typeData.ingById);
+          return `<li class="extra-pizza"><span class="extra-pizza-name">${esc(r.name)}</span><span class="extra-pizza-ings">${ings.map((i) => `${emo(i.emoji)} ${esc(i.name)}`).join(" · ")}</span></li>`;
+        }).join("")}
+      </ul>` : ""}
+    <button class="cta" data-action="reset" data-autofocus>${emo("↺")} Jugar otra ronda</button>
   </div>`;
+}
+
+let lastStage = null;
+let lastCardIdx = null;
+
+// Texto tal como lo leería un lector de pantalla: sin lo marcado aria-hidden (emojis).
+function spokenText(el) {
+  const copy = el.cloneNode(true);
+  copy.querySelectorAll("[aria-hidden='true']").forEach((n) => n.remove());
+  return copy.textContent.trim().replace(/\s+/g, " ");
+}
+
+function announce(msg) {
+  const el = document.getElementById("announcer");
+  if (!el || !msg) return;
+  // Vaciar y reescribir en el siguiente tick para que se anuncie aunque el
+  // texto coincida con el anterior.
+  el.textContent = "";
+  setTimeout(() => { el.textContent = msg; }, 50);
 }
 
 function render() {
@@ -394,7 +439,32 @@ function render() {
     handoff: renderHandoff, swipe: renderSwipe,
     summary1: renderSummary1, summary2: renderSummary2, results: renderResults,
   };
+  // innerHTML destruye el elemento con foco: recordar cuál era para
+  // devolvérselo a su equivalente (p. ej. el botón + del stepper).
+  const prevFocus = document.activeElement?.closest?.("#app [data-action], #app [data-name-idx]");
+  const prevFocusSel = prevFocus
+    ? (prevFocus.dataset.nameIdx !== undefined ? `[data-name-idx="${prevFocus.dataset.nameIdx}"]` : `[data-action="${prevFocus.dataset.action}"]`)
+    : null;
+
   app.innerHTML = (renderers[state.stage] || renderLoading)();
+
+  const stageChanged = state.stage !== lastStage;
+  const cardChanged = state.stage === "swipe" && state.cardIdx !== lastCardIdx;
+  const firstScreen = lastStage === null; // no robar el foco al abrir la app
+  lastStage = state.stage;
+  lastCardIdx = state.stage === "swipe" ? state.cardIdx : null;
+
+  const restore = prevFocusSel && app.querySelector(prevFocusSel);
+  if ((stageChanged || cardChanged) && !firstScreen) {
+    app.querySelector("[data-autofocus]")?.focus({ preventScroll: state.stage === "swipe" });
+  } else if (restore) {
+    // Si el botón quedó deshabilitado (p. ej. + al llegar al máximo), al otro del stepper.
+    (restore.disabled ? app.querySelector(".step-btn:not([disabled])") : restore)?.focus();
+  }
+  if (stageChanged && !firstScreen) {
+    announce([...app.querySelectorAll("[data-announce]")].map(spokenText).filter(Boolean)
+      .map((t) => (/[.!?…:]$/.test(t) ? t : `${t}.`)).join(" "));
+  }
 
   if (state.stage === "swipe") {
     const card = app.querySelector(".ing-card.top");
@@ -408,6 +478,15 @@ function render() {
     }
   }
 }
+
+// Teclado en el swipe: ← no, → sí (sin auto-repetición, para no votar
+// varias cartas por mantener la tecla pulsada).
+document.addEventListener("keydown", (e) => {
+  if (state.stage !== "swipe" || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (e.target.closest?.("input, textarea, select")) return;
+  if (e.key === "ArrowRight") { e.preventDefault(); triggerSwipe(true); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); triggerSwipe(false); }
+});
 
 document.getElementById("app").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");

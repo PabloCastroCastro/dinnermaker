@@ -91,6 +91,20 @@ o vuelve a correr `scripts/bootstrap-github.sh`, que es idempotente y solo
 creará lo que falte.
 
 ## Estilo
-Sigue la paleta y componentes ya definidos en `css/style.css`. Si necesitas
+Sigue la paleta y componentes ya definidos en `css/style.css`.
+
+### Accesibilidad (WCAG 2.1 AA)
+- **Contraste**: texto normal ≥ 4.5:1, texto grande e iconos ≥ 3:1. Los
+  botones rellenos con texto claro usan `#C93A1F` (no `#E1472B`, que solo
+  da 3.9:1); el texto secundario no baja de `rgba(247,237,221,0.62)`.
+- **Emojis**: siempre decorativos y con el nombre en texto al lado. En el
+  juego y el admin usa el helper `emo()` (los envuelve en
+  `aria-hidden="true"`). Botones de solo icono → `aria-label`.
+- **Foco**: no pongas `outline: none` sin alternativa; el anillo común es
+  `:focus-visible`. En `js/app.js`, marca con `data-autofocus` el control
+  que debe recibir el foco al llegar a una pantalla, y con `data-announce`
+  el texto que se lee por la región `aria-live`.
+- Inputs con `<label>` o `aria-label`; controles conmutables como
+  `<button aria-pressed>`, no `<span>` clicables. Si necesitas
 justificar una decisión de diseño no trivial, documenta el porqué en el
 propio PR, no solo el qué.
