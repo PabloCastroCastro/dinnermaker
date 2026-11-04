@@ -20,9 +20,10 @@
 <body>
 <main id="app"></main>
 <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-<aside id="installBanner" class="install-banner" style="display:none;" aria-label="Instalar la app">
+<aside id="installBanner" class="install-banner" hidden aria-label="Instalar la app">
   <span>Instala Dinner Match en tu pantalla de inicio</span>
   <button id="installBtn">Instalar</button>
+  <button id="installClose" class="install-close" aria-label="Cerrar el aviso de instalación"><span aria-hidden="true">✕</span></button>
 </aside>
 <script type="module" src="./js/app.js"></script>
 </body>
