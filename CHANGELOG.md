@@ -30,6 +30,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   o con red lenta, arranca desde caché (#5).
 
 ### Corregido
+- El banner de instalación ya no tapa el último botón en pantallas largas
+  (el contenido reserva su altura mientras se ve) y se puede cerrar con ✕;
+  el cierre se recuerda en este navegador (#34).
 - Correcciones menores (#22): la ronda 3 ya no propone "La vuestra (con
   todo)" cuando una receta tiene exactamente esos ingredientes; los nombres
   vacíos pasan a "Jugador N" y los guardados se recortan a `maxPlayers`

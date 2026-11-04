@@ -536,21 +536,51 @@ document.getElementById("app").addEventListener("input", (e) => {
 });
 
 // ---- PWA install ----
+// El banner es position: fixed. Mientras se ve, el body reserva abajo su
+// altura real (--install-banner-h, medida con ResizeObserver porque en móvil
+// el texto puede ocupar dos líneas) para que no tape el último botón.
+const INSTALL_DISMISSED_KEY = "dinnerMatchInstallDismissed";
+const installBanner = document.getElementById("installBanner");
 let deferredPrompt;
+const bannerObserver = "ResizeObserver" in window
+  ? new ResizeObserver(() => document.body.style.setProperty("--install-banner-h", `${installBanner.offsetHeight}px`))
+  : null;
+
+function installDismissed() {
+  try { return localStorage.getItem(INSTALL_DISMISSED_KEY) === "1"; } catch { return false; }
+}
+function setInstallBanner(visible) {
+  if (!installBanner) return;
+  installBanner.hidden = !visible;
+  document.body.classList.toggle("has-install-banner", visible);
+  if (visible) {
+    document.body.style.setProperty("--install-banner-h", `${installBanner.offsetHeight}px`);
+    bannerObserver?.observe(installBanner);
+  } else {
+    bannerObserver?.disconnect();
+  }
+}
+// Al cerrar el banner con su botón, el foco no debe caer en <body>.
+function focusAfterBanner() {
+  if (installBanner?.contains(document.activeElement)) document.querySelector("#app [data-autofocus]")?.focus();
+}
+
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  const banner = document.getElementById("installBanner");
-  if (banner) banner.style.display = "flex";
+  if (!installDismissed()) setInstallBanner(true);
 });
-document.getElementById("installBtn")?.addEventListener("click", async () => {
-  document.getElementById("installBanner").style.display = "none";
+document.getElementById("installBtn")?.addEventListener("click", () => {
+  focusAfterBanner();
+  setInstallBanner(false);
   if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
 });
-window.addEventListener("appinstalled", () => {
-  const banner = document.getElementById("installBanner");
-  if (banner) banner.style.display = "none";
+document.getElementById("installClose")?.addEventListener("click", () => {
+  focusAfterBanner();
+  setInstallBanner(false);
+  try { localStorage.setItem(INSTALL_DISMISSED_KEY, "1"); } catch { /* sin almacenamiento: volverá a salir */ }
 });
+window.addEventListener("appinstalled", () => setInstallBanner(false));
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js").catch(() => {});

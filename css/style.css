@@ -103,13 +103,17 @@ button { font-family: inherit; }
 .error-box { color: #EE5C3F; background: #241A15; border: 1px solid rgba(225,71,43,0.4); border-radius: 12px; padding: 14px; font-size: 13px; text-align: center; }
 
 .install-banner {
-  position: fixed; left: 16px; right: 16px; bottom: 16px; max-width: 380px; margin: 0 auto;
+  position: fixed; left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); max-width: 380px; margin: 0 auto;
   background: #241A15; border: 1px solid rgba(232,163,61,0.35); border-radius: 14px; padding: 12px 14px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px; z-index: 50;
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
-.install-banner span { font-size: 13px; }
+.install-banner[hidden] { display: none; }
+.install-banner > span { font-size: 13px; flex: 1; }
 .install-banner button { background: #E8A33D; color: #1B1410; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.install-banner .install-close { background: transparent; color: #F7EDDD; border: 1px solid rgba(247,237,221,0.25); min-width: 36px; min-height: 36px; padding: 0; }
+/* Mientras el banner (fixed) está visible, reservar su altura para que no tape el final. */
+body.has-install-banner { padding-bottom: calc(var(--install-banner-h, 64px) + 32px + env(safe-area-inset-bottom)); }
 
 /* Admin-specific */
 .admin-wrap { max-width: 640px; align-items: stretch; }
