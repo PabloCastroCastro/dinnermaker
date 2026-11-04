@@ -57,6 +57,8 @@ Dos formas, sin tocar código JS:
    y `visualStyle`.
 2. Cambia a las pestañas Ingredientes / Recetas / Reglas (aparecerá
    seleccionado el tipo nuevo en el desplegable) y da de alta su contenido.
+   En Reglas aparece una fila por cada categoría de sus ingredientes: ponle
+   un tope a cada una (vacío = sin límite, pero la CI exige tope).
 3. Exporta los 4 ficheros (`dish-types.json` + los 3 del tipo) y colócalos:
    `data/dish-types.json` y `data/types/pasta/{ingredients,recipes,config}.json`.
 

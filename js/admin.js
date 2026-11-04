@@ -50,15 +50,20 @@ async function ensureTypeLoaded(id) {
   render();
 }
 
+// Región de avisos persistente (creada al cargar, no con el primer aviso,
+// para que los lectores de pantalla anuncien también el primero).
+const toastHost = document.createElement("aside");
+toastHost.setAttribute("aria-label", "Avisos");
+toastHost.innerHTML = `<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>`;
+document.body.appendChild(toastHost);
+let toastTimer;
+
 function toast(msg) {
-  let el = document.getElementById("toast");
-  if (el) el.remove();
-  el = document.createElement("div");
-  el.id = "toast";
-  el.className = "toast";
+  const el = document.getElementById("toast");
   el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2200);
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; el.textContent = ""; }, 2200);
 }
 
 function download(filename, obj) {
@@ -236,19 +241,37 @@ function configTab() {
   if (!t) return `<p class="subtitle">Cargando…</p>`;
   const c = t.config;
   const caps = c.categoryCaps || {};
-  const catsInUse = [...new Set(t.ingredients.map((i) => i.cat))];
-  const missing = catsInUse.filter((cat) => !(cat in caps));
+  const countByCat = {};
+  for (const i of t.ingredients) countByCat[i.cat] = (countByCat[i.cat] || 0) + 1;
+  // Una fila por cada categoría en uso (tenga tope o no) y, al final, las que
+  // tienen tope pero ya no usa ningún ingrediente, con opción de quitarlas.
+  const inUse = Object.keys(countByCat).sort((a, b) => a.localeCompare(b, "es"));
+  const unused = Object.keys(caps).filter((cat) => !countByCat[cat]).sort((a, b) => a.localeCompare(b, "es"));
+  const missing = inUse.filter((cat) => !(cat in caps));
+  const capRow = (cat) => {
+    const n = countByCat[cat] || 0;
+    const value = cat in caps ? caps[cat] : "";
+    return `
+      <div class="config-row" data-cap-row="${esc(cat)}">
+        <span><span aria-hidden="true">${esc(cat)}</span> <span class="visual-badge">${n ? `${n} ingr.` : "sin ingredientes"}</span></span>
+        <span style="display:flex; gap:6px; align-items:center;">
+          <input class="text-input" style="margin:0;" data-cap-cat="${esc(cat)}" aria-label="Tope de ${esc(cat)}${n ? ` (${n} ingredientes)` : " (sin ingredientes)"}"
+                 type="number" min="0" step="1" inputmode="numeric" placeholder="∞" value="${esc(value)}" />
+          ${n ? "" : `<button type="button" class="icon-btn danger" data-action="remove-cap" data-cat="${esc(cat)}" aria-label="Quitar el tope de ${esc(cat)}">${emo("✕")}</button>`}
+        </span>
+      </div>`;
+  };
   return `
     ${typeSelectorHTML()}
     <div class="card-panel">
-      <div class="config-row"><label for="cfg-pool">Tamaño del mazo de ingredientes</label><input class="text-input" style="margin:0;" id="cfg-pool" type="number" value="${c.ingredientPoolSize}" /></div>
-      <div class="config-row"><label for="cfg-candmax">Recetas candidatas (máx)</label><input class="text-input" style="margin:0;" id="cfg-candmax" type="number" value="${c.candidateMax}" /></div>
-      <div class="config-row"><label for="cfg-candmin">Solapamiento mínimo candidata</label><input class="text-input" style="margin:0;" id="cfg-candmin" type="number" value="${c.candidateMinOverlap}" /></div>
+      <div class="config-row"><label for="cfg-pool">Tamaño del mazo de ingredientes <span class="visual-badge">0 = sin límite</span></label><input class="text-input" style="margin:0;" id="cfg-pool" type="number" min="0" step="1" inputmode="numeric" value="${c.ingredientPoolSize ?? 0}" /></div>
+      <div class="config-row"><label for="cfg-candmax">Recetas candidatas (máx)</label><input class="text-input" style="margin:0;" id="cfg-candmax" type="number" min="1" step="1" inputmode="numeric" value="${c.candidateMax ?? 6}" /></div>
+      <div class="config-row"><label for="cfg-candmin">Solapamiento mínimo candidata</label><input class="text-input" style="margin:0;" id="cfg-candmin" type="number" min="0" step="1" inputmode="numeric" value="${c.candidateMinOverlap ?? 2}" /></div>
     </div>
     <div class="row-label mono" style="margin-top:16px;">Tope de ingredientes por categoría</div>
-    <div class="card-panel">
-      ${Object.keys(caps).map((cat) => `<div class="config-row"><span>${esc(cat)}</span><input class="text-input" style="margin:0;" data-cap-cat="${esc(cat)}" aria-label="Tope de ${esc(cat)}" type="number" value="${caps[cat]}" /></div>`).join("") || `<p class="subtitle">Sin categorías todavía.</p>`}
-      ${missing.length ? `<p class="subtitle" style="text-align:left; color:#E8A33D;">Categorías usadas en ingredientes pero sin tope definido: ${missing.map(esc).join(", ")}. Se incluirán con tope "sin límite" hasta que les pongas uno.</p>` : ""}
+    <div class="card-panel" id="caps-panel">
+      ${[...inUse, ...unused].map(capRow).join("") || `<p class="subtitle">Sin categorías todavía: añade ingredientes a este tipo.</p>`}
+      ${missing.length ? `<p class="subtitle" style="text-align:left; color:#E8A33D;">Sin tope: ${missing.map(esc).join(", ")}. Vacío = sin límite (entran todos sus ingredientes al mazo). Ponles un tope antes de publicar: la CI lo exige.</p>` : ""}
     </div>
     <button class="cta" data-action="save-config">Guardar reglas</button>
   `;
@@ -410,15 +433,43 @@ document.getElementById("app").addEventListener("click", async (e) => {
   }
 
   // -- Config --
+  else if (action === "remove-cap") {
+    // Solo en el formulario: se aplica al pulsar "Guardar reglas", así no se
+    // pierden otros cambios sin guardar.
+    const row = btn.closest("[data-cap-row]");
+    const next = row.nextElementSibling?.querySelector("input") || document.querySelector('[data-action="save-config"]');
+    row.remove();
+    next?.focus();
+    toast(`Tope de «${btn.dataset.cat}» quitado (pulsa Guardar reglas)`);
+  }
   else if (action === "save-config") {
     const t = currentType();
-    t.config.ingredientPoolSize = +document.getElementById("cfg-pool").value || 0;
-    t.config.candidateMax = +document.getElementById("cfg-candmax").value || 6;
-    t.config.candidateMinOverlap = +document.getElementById("cfg-candmin").value || 2;
+    // Enteros >= min; vacío → valor por defecto (o "sin tope" en categorías).
+    // Un valor inválido no se sustituye en silencio: se avisa y no se guarda.
+    const errors = [];
+    const readInt = (input, label, min, fallback) => {
+      const raw = input.value.trim();
+      if (raw === "") return fallback;
+      const n = Number(raw);
+      if (!Number.isInteger(n) || n < min) { errors.push(`${label} debe ser un entero ≥ ${min}`); input.setAttribute("aria-invalid", "true"); return undefined; }
+      input.removeAttribute("aria-invalid");
+      return n;
+    };
+    const pool = readInt(document.getElementById("cfg-pool"), "Tamaño del mazo", 0, 0);
+    const candMax = readInt(document.getElementById("cfg-candmax"), "Recetas candidatas", 1, 6);
+    const candMin = readInt(document.getElementById("cfg-candmin"), "Solapamiento mínimo", 0, 2);
     const caps = {};
-    document.querySelectorAll("[data-cap-cat]").forEach((inp) => { caps[inp.dataset.capCat] = +inp.value || 0; });
-    t.config.categoryCaps = caps;
-    saveDraft(); toast("Reglas guardadas");
+    document.querySelectorAll("[data-cap-cat]").forEach((inp) => {
+      const v = readInt(inp, `Tope de ${inp.dataset.capCat}`, 0, null);
+      if (v !== null && v !== undefined) caps[inp.dataset.capCat] = v;
+    });
+    if (errors.length) {
+      toast(errors[0]);
+      document.querySelector('[aria-invalid="true"]')?.focus();
+      return;
+    }
+    Object.assign(t.config, { ingredientPoolSize: pool, candidateMax: candMax, candidateMinOverlap: candMin, categoryCaps: caps });
+    saveDraft(); render(); toast("Reglas guardadas");
   }
 
   // -- Export --

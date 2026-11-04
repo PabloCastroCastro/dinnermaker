@@ -59,8 +59,10 @@ No hace falta tocar código:
   → sustituir el fichero.
 
 Si el ingrediente introduce una categoría (`cat`) nueva, añade también su
-tope en `data/types/<tipo>/config.json → categoryCaps`, o el mazo de esa
-ronda la ignorará al repartir cupos.
+tope en `data/types/<tipo>/config.json → categoryCaps` (en `admin.html`,
+pestaña Reglas: aparece una fila por cada categoría en uso). Sin tope, todos
+los ingredientes de esa categoría entran al mazo y rompen el balanceo; la CI
+(`tests/data.test.mjs`) lo rechaza.
 
 ## Añadir un tipo de cena nuevo
 Ver `README.md` sección "Añadir un tipo de cena nuevo" — resumen: crea
