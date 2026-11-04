@@ -165,6 +165,22 @@ function finishCard(liked) {
   render();
 }
 
+// Deshacer el último voto del jugador actual: vuelve a la carta anterior y
+// la quita de sus "sí" (si era un "no", no hay nada que quitar). Solo dentro
+// del turno: en la primera carta no hay voto propio que deshacer, y votar la
+// última carta cierra el turno.
+function undoSwipe() {
+  if (state.stage !== "swipe" || state.animating || state.cardIdx === 0) return;
+  state.cardIdx -= 1;
+  const card = state.deck[state.cardIdx];
+  const likes = state.likesByPlayer[state.playerIdx];
+  const i = likes.indexOf(card.id);
+  if (i !== -1) likes.splice(i, 1);
+  state.dragX = 0; state.exitDir = 0;
+  render();
+  announce(`Voto deshecho: ${card.name}`);
+}
+
 function triggerSwipe(liked) {
   if (state.animating || !state.deck[state.cardIdx]) return;
   state.animating = true;
@@ -353,7 +369,9 @@ function renderSwipe() {
       <button class="round-btn no" data-action="swipe-no" aria-label="No" aria-keyshortcuts="ArrowLeft">${emo("✕")}</button>
       <button class="round-btn yes" data-action="swipe-yes" aria-label="Sí" aria-keyshortcuts="ArrowRight">${emo("♥")}</button>
     </div>
-    <div class="hint" id="swipe-hint">Desliza la carta, usa los botones o las flechas ← (no) y → (sí) del teclado</div>
+    <button class="cta ghost small undo-btn" data-action="undo" aria-keyshortcuts="Control+Z"
+            ${state.cardIdx === 0 ? "disabled" : ""}>${emo("↶")} Deshacer${state.cardIdx > 0 ? `<span class="sr-only">: ${esc(state.deck[state.cardIdx - 1].name)}</span>` : ""}</button>
+    <div class="hint" id="swipe-hint">Desliza la carta, usa los botones o las flechas ← (no) y → (sí) del teclado. Ctrl+Z deshace.</div>
   </div>`;
 }
 
@@ -509,8 +527,10 @@ function render() {
 // Teclado en el swipe: ← no, → sí (sin auto-repetición, para no votar
 // varias cartas por mantener la tecla pulsada).
 document.addEventListener("keydown", (e) => {
-  if (state.stage !== "swipe" || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (state.stage !== "swipe" || e.repeat || e.altKey || e.shiftKey) return;
   if (e.target.closest?.("input, textarea, select")) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undoSwipe(); return; }
+  if (e.ctrlKey || e.metaKey) return;
   if (e.key === "ArrowRight") { e.preventDefault(); triggerSwipe(true); }
   else if (e.key === "ArrowLeft") { e.preventDefault(); triggerSwipe(false); }
 });
@@ -525,6 +545,7 @@ document.getElementById("app").addEventListener("click", (e) => {
   else if (action === "begin-turn") beginTurn();
   else if (action === "swipe-no") triggerSwipe(false);
   else if (action === "swipe-yes") triggerSwipe(true);
+  else if (action === "undo") undoSwipe();
   else if (action === "start-round2") startRound2();
   else if (action === "start-round3") startRound3();
   else if (action === "reset") resetAll();
