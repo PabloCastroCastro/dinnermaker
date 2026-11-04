@@ -35,13 +35,14 @@ async function init() {
     dishTypes = loaded.dishTypes;
     gameConfig = loaded.gameConfig;
     if (!dishTypes.length) throw new Error("No hay tipos de cena configurados en data/dish-types.json");
-    const saved = JSON.parse(localStorage.getItem("dinnerMatchNames") || "null");
-    if (saved && saved.length >= gameConfig.minPlayers) {
-      state.names = saved;
-      state.numPlayers = saved.length;
+    const saved = readSavedNames();
+    if (saved.length >= gameConfig.minPlayers) {
+      // Recortado a maxPlayers: puede haber bajado desde la última partida.
+      state.names = saved.slice(0, gameConfig.maxPlayers);
+      state.numPlayers = state.names.length;
     } else {
       state.numPlayers = Math.max(gameConfig.minPlayers, Math.min(3, gameConfig.maxPlayers));
-      state.names = Array.from({ length: state.numPlayers }, (_, i) => `Jugador ${i + 1}`);
+      state.names = Array.from({ length: state.numPlayers }, (_, i) => saved[i] || defaultName(i));
     }
     state.stage = "setup";
   } catch (e) {
@@ -62,17 +63,35 @@ function showError(title, detail, retry) {
   render();
 }
 
+const NAMES_KEY = "dinnerMatchNames";
+const defaultName = (i) => `Jugador ${i + 1}`;
+
+// Nombres de la última partida. Tolera localStorage corrupto o bloqueado
+// (no debe impedir arrancar) y descarta lo que no sean textos no vacíos.
+function readSavedNames() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(NAMES_KEY) || "[]");
+    return Array.isArray(saved)
+      ? saved.filter((n) => typeof n === "string").map((n) => n.trim().slice(0, 16)).filter(Boolean)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 function setNumPlayersClamped(n) {
   const c = Math.max(gameConfig.minPlayers, Math.min(gameConfig.maxPlayers, n));
   state.numPlayers = c;
-  while (state.names.length < c) state.names.push(`Jugador ${state.names.length + 1}`);
+  while (state.names.length < c) state.names.push(defaultName(state.names.length));
   state.names = state.names.slice(0, c);
   render();
   announce(`${c} jugadores`);
 }
 
 function startRound1() {
-  localStorage.setItem("dinnerMatchNames", JSON.stringify(state.names));
+  // Un nombre vacío (o solo espacios) pasa a "Jugador N" en vez de "Turno de ".
+  state.names = state.names.map((n, i) => n.trim() || defaultName(i));
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify(state.names)); } catch { /* modo privado, sin cuota… */ }
   state.round = 1;
   state.deck = shuffle(dishTypes);
   state.likesByPlayer = Array.from({ length: state.numPlayers }, () => []);
@@ -191,6 +210,14 @@ document.addEventListener("pointerup", () => {
     state.dragX = 0;
     updateCardTransform();
   }
+});
+// El navegador cancela el gesto (scroll del sistema, llamada entrante, otro
+// dedo…): la carta vuelve a su sitio sin votar y el arrastre no queda colgado.
+document.addEventListener("pointercancel", () => {
+  if (!state.dragging) return;
+  state.dragging = false;
+  state.dragX = 0;
+  updateCardTransform();
 });
 
 // ---- Render pieces ----
