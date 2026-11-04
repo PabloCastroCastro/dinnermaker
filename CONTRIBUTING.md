@@ -68,6 +68,19 @@ Ver `README.md` sección "Añadir un tipo de cena nuevo" — resumen: crea
 `admin.html`) y añade la entrada en `data/dish-types.json`. No hace falta
 tocar `service-worker.js` ni el código JS.
 
+## Service worker y caché
+`service-worker.js` sirve todo lo del propio sitio con *network-first*
+(con conexión siempre llega lo último publicado; la caché es solo para
+offline o red lenta) y nunca cachea respuestas de error. Por eso:
+- **Cambiar `/data` o el código no requiere tocar el service worker.**
+- **Sube `CACHE_NAME`** (`dinner-match-v4` → `v5`...) solo si quieres purgar
+  la caché de todos los clientes: al renombrar o borrar ficheros del shell,
+  o si cambias la estrategia de caché.
+- Si añades un fichero al shell (un HTML, CSS o módulo de `js/` nuevo),
+  añádelo a `ASSETS` para que funcione offline desde la primera visita.
+  `tests/sw.test.mjs` falla si falta alguno o si una ruta de `ASSETS` no
+  existe.
+
 ## Añadir una tarea al backlog
 Añádela a `backlog/issues.json` (con `title`, `body`, `labels`, `milestone`)
 y luego créala en GitHub con:
