@@ -234,5 +234,25 @@
       "documentation"
     ],
     "milestone": "v1.0 – Deploy & Polish"
+  },
+  {
+    "title": "El banner de instalación tapa el último botón en pantallas largas",
+    "body": "`.install-banner` es `position: fixed` abajo y no reserva espacio, así que en pantallas con scroll (resultado con varias coincidencias, setup con 8 jugadores) tapa el último botón (\"Jugar otra ronda\"). Ya pasaba antes de #4.\n\n**Aceptación**\n- [ ] Mientras el banner está visible, el contenido reserva su altura abajo (padding en `body` o similar) y el último botón queda accesible\n- [ ] Opción de cerrar el banner (✕ con `aria-label`), recordada en `localStorage`\n- [ ] Probado en móvil (400×860) en las pantallas de setup y resultado\n\n_Detectado durante #4 (accesibilidad)._",
+    "labels": [
+      "bug",
+      "pwa",
+      "a11y"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
+  },
+  {
+    "title": "Admin: el foco se pierde al cambiar de pestaña o guardar",
+    "body": "`admin.js` re-renderiza todo `#app` con `innerHTML` en cada acción, así que al cambiar de pestaña, abrir un formulario o guardar, el foco vuelve a `<body>` y quien usa teclado o lector de pantalla tiene que empezar a tabular desde arriba.\n\n**Aceptación**\n- [ ] Al cambiar de pestaña, el foco queda en la pestaña activa\n- [ ] Al abrir un formulario (nuevo/editar), el foco va a su primer input; al guardar o cancelar, vuelve al botón que lo abrió (o a la fila editada)\n- [ ] Los toasts se anuncian por una región `aria-live` (`role=\"status\"`)\n- [ ] Mismo patrón que el juego (`data-autofocus` / conservar foco por `data-action`), ver `CONTRIBUTING.md` → Accesibilidad\n\n_Detectado durante #4 (accesibilidad)._",
+    "labels": [
+      "enhancement",
+      "a11y",
+      "admin"
+    ],
+    "milestone": "v1.2 – Calidad de vida"
   }
 ]
