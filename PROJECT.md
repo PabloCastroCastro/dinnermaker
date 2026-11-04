@@ -82,6 +82,10 @@ suficiente para cambiar el contenido sin redeploy manual.
 { "minPlayers": 2, "maxPlayers": 8, "dishTypeCandidateMax": 10 }
 ```
 Ajustes globales, independientes del tipo de cena elegido.
+`dishTypeCandidateMax` es cuántos tipos de cena, como máximo, salen en la
+ronda 1 (elegidos al azar entre los que estén en juego; `0` = todos). Con
+muchos tipos evita que cada jugador tenga que deslizar decenas de cartas.
+Por defecto, 10.
 
 ### `data/types/<id>/ingredients.json`
 ```json
@@ -133,9 +137,10 @@ tipo.
 
 - **`buildBalancedPool(ingredients, config)`**: agrupa por `cat`, muestrea
   hasta `categoryCaps[cat]` de cada grupo (barajado), concatena y recorta a
-  `ingredientPoolSize`. Se usa en la ronda 2. La ronda 1 no lo usa: baraja
-  todos los tipos de `dish-types.json` con `shuffle` (limitar cuántos se
-  enseñan es la issue de `dishTypeCandidateMax`).
+  `ingredientPoolSize`. Se usa en la ronda 2.
+- **`pickDishTypes(dishTypes, max)`**: mazo de la ronda 1. Baraja los tipos
+  en juego (los de `dish-types.json` menos los que el grupo quite en el
+  setup) y se queda con como mucho `dishTypeCandidateMax`.
 - **Match**: intersección de los ids marcados "sí" por todos los jugadores,
   en cualquier ronda.
 - **`resolveDishType(matchedTypes)`**: si hay más de un tipo de cena

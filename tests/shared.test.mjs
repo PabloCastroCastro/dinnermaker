@@ -6,7 +6,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildBalancedPool, pickCandidates, resolveDishType, shuffle } from "../js/shared.js";
+import { buildBalancedPool, pickCandidates, pickDishTypes, resolveDishType, shuffle } from "../js/shared.js";
 
 // Las funciones usan Math.random: las propiedades se comprueban en muchas
 // ejecuciones para no depender de una única barajada afortunada.
@@ -237,6 +237,46 @@ describe("pickCandidates", () => {
       }
     });
   }
+});
+
+describe("pickDishTypes", () => {
+  const types = Array.from({ length: 19 }, (_, i) => ({ id: `t${i}`, name: `T${i}` }));
+
+  test("nunca devuelve más de max tipos, sin repetidos y solo del catálogo", () => {
+    const catalog = new Set(ids(types));
+    for (let r = 0; r < RUNS; r++) {
+      const out = ids(pickDishTypes(types, 10));
+      assert.equal(out.length, 10);
+      assert.equal(new Set(out).size, 10);
+      assert.ok(out.every((id) => catalog.has(id)));
+    }
+  });
+
+  test("todos los tipos pueden salir (la muestra es aleatoria, no siempre los primeros)", () => {
+    const seen = new Set();
+    for (let r = 0; r < RUNS; r++) for (const id of ids(pickDishTypes(types, 10))) seen.add(id);
+    assert.equal(seen.size, types.length);
+  });
+
+  test("con menos tipos que max, max 0 o sin max: entran todos, barajados", () => {
+    for (const max of [50, 19, 0, undefined]) {
+      assert.deepEqual(ids(pickDishTypes(types, max)).sort(), ids(types).sort(), `max=${max}`);
+    }
+    const orders = new Set();
+    for (let r = 0; r < 20; r++) orders.add(ids(pickDishTypes(types, 0)).join());
+    assert.ok(orders.size > 1, "no baraja");
+  });
+
+  test("no muta la lista de entrada", () => {
+    const snapshot = structuredClone(types);
+    pickDishTypes(types, 5);
+    assert.deepEqual(types, snapshot);
+  });
+
+  test(`game-config.json: dishTypeCandidateMax por defecto razonable (8-10)`, () => {
+    const max = readJSON("data/game-config.json").dishTypeCandidateMax;
+    assert.ok(max >= 8 && max <= 10, String(max));
+  });
 });
 
 describe("resolveDishType", () => {

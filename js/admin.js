@@ -273,8 +273,9 @@ function dishTypesTab() {
   return `
     <div class="card-panel" style="margin-bottom:16px;">
       <div class="row-label mono">Ajustes globales</div>
-      <div class="config-row"><label for="gc-min">Jugadores mínimo</label><input class="text-input" style="margin:0;" id="gc-min" type="number" value="${gc.minPlayers}" /></div>
-      <div class="config-row"><label for="gc-max">Jugadores máximo</label><input class="text-input" style="margin:0;" id="gc-max" type="number" value="${gc.maxPlayers}" /></div>
+      <div class="config-row"><label for="gc-min">Jugadores mínimo</label><input class="text-input" style="margin:0;" id="gc-min" type="number" min="1" step="1" inputmode="numeric" value="${esc(gc.minPlayers ?? 2)}" /></div>
+      <div class="config-row"><label for="gc-max">Jugadores máximo</label><input class="text-input" style="margin:0;" id="gc-max" type="number" min="1" step="1" inputmode="numeric" value="${esc(gc.maxPlayers ?? 8)}" /></div>
+      <div class="config-row"><label for="gc-typemax">Tipos de cena en la ronda 1 <span class="visual-badge">al azar · 0 = todos</span></label><input class="text-input" style="margin:0;" id="gc-typemax" type="number" min="0" step="1" inputmode="numeric" value="${esc(gc.dishTypeCandidateMax ?? 10)}" /></div>
       <button class="cta small" data-action="save-gameconfig">Guardar ajustes globales</button>
     </div>
     ${formHTML}
@@ -422,6 +423,22 @@ function configTab() {
   `;
 }
 
+// Lectura de inputs numéricos: entero >= min; vacío → `fallback`. Un valor
+// inválido no se sustituye en silencio: se anota en `errors`, se marca
+// aria-invalid y devuelve undefined (quien llama avisa y no guarda).
+function intReader() {
+  const errors = [];
+  const readInt = (input, label, min, fallback) => {
+    const raw = input.value.trim();
+    if (raw === "") return fallback;
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < min) { errors.push(`${label} debe ser un entero ≥ ${min}`); input.setAttribute("aria-invalid", "true"); return undefined; }
+    input.removeAttribute("aria-invalid");
+    return n;
+  };
+  return { readInt, errors };
+}
+
 // ---- Foco ----
 // render() reescribe #app con innerHTML y destruye el elemento con foco.
 // Por defecto se devuelve el foco a su equivalente tras repintar (mismo id o
@@ -554,8 +571,18 @@ document.getElementById("app").addEventListener("click", async (e) => {
     saveDraft(); render(); toast("Tipo de cena guardado");
   }
   else if (action === "save-gameconfig") {
-    state.gameConfig.minPlayers = +document.getElementById("gc-min").value || 2;
-    state.gameConfig.maxPlayers = +document.getElementById("gc-max").value || 8;
+    const { readInt, errors } = intReader();
+    const minInput = document.getElementById("gc-min");
+    const maxInput = document.getElementById("gc-max");
+    const minPlayers = readInt(minInput, "Jugadores mínimo", 1, 2);
+    const maxPlayers = readInt(maxInput, "Jugadores máximo", 1, 8);
+    const typeMax = readInt(document.getElementById("gc-typemax"), "Tipos en la ronda 1", 0, 10);
+    if (!errors.length && maxPlayers < minPlayers) {
+      errors.push("Jugadores máximo no puede ser menor que el mínimo");
+      maxInput.setAttribute("aria-invalid", "true");
+    }
+    if (errors.length) { toast(errors[0]); document.querySelector('[aria-invalid="true"]')?.focus(); return; }
+    Object.assign(state.gameConfig, { minPlayers, maxPlayers, dishTypeCandidateMax: typeMax });
     saveDraft(); toast("Ajustes globales guardados");
   }
 
@@ -646,17 +673,7 @@ document.getElementById("app").addEventListener("click", async (e) => {
   }
   else if (action === "save-config") {
     const t = currentType();
-    // Enteros >= min; vacío → valor por defecto (o "sin tope" en categorías).
-    // Un valor inválido no se sustituye en silencio: se avisa y no se guarda.
-    const errors = [];
-    const readInt = (input, label, min, fallback) => {
-      const raw = input.value.trim();
-      if (raw === "") return fallback;
-      const n = Number(raw);
-      if (!Number.isInteger(n) || n < min) { errors.push(`${label} debe ser un entero ≥ ${min}`); input.setAttribute("aria-invalid", "true"); return undefined; }
-      input.removeAttribute("aria-invalid");
-      return n;
-    };
+    const { readInt, errors } = intReader();
     const pool = readInt(document.getElementById("cfg-pool"), "Tamaño del mazo", 0, 0);
     const candMax = readInt(document.getElementById("cfg-candmax"), "Recetas candidatas", 1, 6);
     const candMin = readInt(document.getElementById("cfg-candmin"), "Solapamiento mínimo", 0, 2);
