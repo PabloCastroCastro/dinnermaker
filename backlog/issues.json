@@ -49,7 +49,7 @@
       "admin",
       "enhancement"
     ],
-    "milestone": "v1.1 – Contenido configurable"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Validar integridad de datos al cargar (ingredientes huérfanos, ids duplicados)",
@@ -58,7 +58,7 @@
       "data",
       "enhancement"
     ],
-    "milestone": "v1.1 – Contenido configurable"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Metadatos dietéticos en ingredientes (vegetariano / vegano / sin gluten)",
@@ -67,7 +67,7 @@
       "data",
       "enhancement"
     ],
-    "milestone": "v1.1 – Contenido configurable"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Backend mínimo para guardar cambios del admin sin exportar/commitear a mano",
@@ -120,7 +120,7 @@
     "labels": [
       "enhancement"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Excluir categorías completas antes de empezar (ej. sin pescado)",
@@ -128,7 +128,7 @@
     "labels": [
       "enhancement"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Soporte multi-idioma (i18n)",
@@ -137,7 +137,7 @@
       "enhancement",
       "i18n"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Admin: reordenar ingredientes y pizzas (drag & drop)",
@@ -147,7 +147,7 @@
       "enhancement",
       "good first issue"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Añadir más tipos de cena de fábrica (pasta, tacos, sushi, poke, sopa)",
@@ -156,7 +156,7 @@
       "data",
       "good first issue"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Ronda 2 se queda en \"Cargando…\" si falla la carga del tipo de cena",
@@ -173,7 +173,7 @@
       "bug",
       "admin"
     ],
-    "milestone": "v1.1 – Contenido configurable"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Admin: el borrador local oculta para siempre los cambios de /data",
@@ -182,7 +182,7 @@
       "bug",
       "admin"
     ],
-    "milestone": "v1.1 – Contenido configurable"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Correcciones menores en juego y admin",
@@ -190,7 +190,7 @@
     "labels": [
       "bug"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Votos ponderados: alternativa a la unanimidad estricta",
@@ -199,7 +199,7 @@
       "enhancement",
       "architecture"
     ],
-    "milestone": "v1.1 – Contenido configurable"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Ronda 1: mostrar una muestra de tipos de cena (usar dishTypeCandidateMax)",
@@ -208,7 +208,7 @@
       "enhancement",
       "data"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Deshacer el último swipe",
@@ -217,7 +217,7 @@
       "enhancement",
       "good first issue"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Pantalla de resultado: re-sorteo, desempate en ronda 3 y compartir",
@@ -225,7 +225,7 @@
     "labels": [
       "enhancement"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Metadatos del repo: descripción, topics y licencia",
@@ -243,7 +243,7 @@
       "pwa",
       "a11y"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   },
   {
     "title": "Admin: el foco se pierde al cambiar de pestaña o guardar",
@@ -253,6 +253,6 @@
       "a11y",
       "admin"
     ],
-    "milestone": "v1.2 – Calidad de vida"
+    "milestone": "v1.0 – Deploy & Polish"
   }
 ]
