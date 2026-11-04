@@ -95,6 +95,8 @@ button { font-family: inherit; }
 .dish-visual.stack .plate-fill { inset: 14px; border-radius: 18px; background: repeating-linear-gradient(180deg, #C97A2E 0 14%, #8B5A2B 14% 20%, #6B8F47 20% 28%, #E1472B 28% 34%, #C97A2E 34% 48%, #8B5A2B 48% 54%, #C97A2E 54% 68%); }
 .chip-list { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 22px; }
 .chip { background: #241A15; border: 1px solid rgba(247,237,221,0.12); border-radius: 999px; padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.chip-toggle { font: inherit; font-size: 13px; color: #F7EDDD; cursor: pointer; }
+.chip-toggle.off { color: rgba(247,237,221,0.62); text-decoration: line-through; border-style: dashed; }
 .empty-msg { text-align: center; color: rgba(247,237,221,0.55); font-size: 14px; margin-bottom: 26px; padding: 0 10px; }
 .extra-pizza-row { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
 .extra-pizza { background: #241A15; border: 1px solid rgba(247,237,221,0.1); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }

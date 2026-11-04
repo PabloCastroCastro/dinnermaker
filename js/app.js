@@ -1,4 +1,4 @@
-import { loadGameConfig, loadTypeData, shuffle, hashStr, esc, buildBalancedPool, pickCandidates, resolveDishType, ingObjs } from "./shared.js";
+import { loadGameConfig, loadTypeData, shuffle, hashStr, esc, buildBalancedPool, pickCandidates, pickDishTypes, resolveDishType, ingObjs } from "./shared.js";
 
 const PLAYER_COLORS = ["#E1472B", "#E8A33D", "#6B8F47", "#B4654A", "#C98A3E", "#8C9E5E", "#D3562F", "#A46B2E"];
 
@@ -63,6 +63,30 @@ function showError(title, detail, retry) {
   render();
 }
 
+// Tipos que el grupo ha quitado hoy en el setup ("hoy no quiero pizza").
+// No se guarda: es una decisión de cada partida.
+const excludedTypes = new Set();
+const typesInPlay = () => dishTypes.filter((t) => !excludedTypes.has(t.id));
+
+function toggleType(id) {
+  if (!excludedTypes.has(id) && typesInPlay().length === 1) {
+    announce("Tiene que quedar al menos un tipo de cena en juego");
+    return;
+  }
+  excludedTypes.has(id) ? excludedTypes.delete(id) : excludedTypes.add(id);
+  render();
+  const t = dishTypes.find((x) => x.id === id);
+  announce(`${t.name} ${excludedTypes.has(id) ? "fuera" : "en juego"}. ${roundOneSummary()}`);
+}
+
+function roundOneSummary() {
+  const n = typesInPlay().length;
+  const max = gameConfig.dishTypeCandidateMax;
+  return max > 0 && n > max
+    ? `${n} tipos en juego: en la ronda 1 saldrán ${max} al azar.`
+    : `${n} tipo${n === 1 ? "" : "s"} en juego.`;
+}
+
 const NAMES_KEY = "dinnerMatchNames";
 const defaultName = (i) => `Jugador ${i + 1}`;
 
@@ -93,7 +117,7 @@ function startRound1() {
   state.names = state.names.map((n, i) => n.trim() || defaultName(i));
   try { localStorage.setItem(NAMES_KEY, JSON.stringify(state.names)); } catch { /* modo privado, sin cuota… */ }
   state.round = 1;
-  state.deck = shuffle(dishTypes);
+  state.deck = pickDishTypes(typesInPlay(), gameConfig.dishTypeCandidateMax);
   state.likesByPlayer = Array.from({ length: state.numPlayers }, () => []);
   state.playerIdx = 0;
   state.cardIdx = 0;
@@ -289,10 +313,16 @@ function renderSetup() {
       </div>
       <div class="row-label mono">Nombres</div>
       ${state.names.map((n, i) => `<input class="name-input" data-name-idx="${i}" maxlength="16" value="${esc(n)}" aria-label="Nombre del jugador ${i + 1}" />`).join("")}
-      <div class="row-label mono" style="margin-top:14px;">Tipos de cena en juego</div>
-      <ul class="chip-list" style="margin-bottom:0;">
-        ${dishTypes.map((t) => `<li class="chip">${emo(t.emoji)}${esc(t.name)}</li>`).join("")}
+      <div class="row-label mono" style="margin-top:14px;" id="types-label">Tipos de cena en juego</div>
+      <div role="group" aria-labelledby="types-label" aria-describedby="types-summary">
+      <ul class="chip-list" style="margin-bottom:8px;">
+        ${dishTypes.map((t) => {
+          const on = !excludedTypes.has(t.id);
+          return `<li><button type="button" class="chip chip-toggle${on ? "" : " off"}" data-action="toggle-type" data-id="${esc(t.id)}" aria-pressed="${on}">${emo(on ? t.emoji : "🚫")}${esc(t.name)}</button></li>`;
+        }).join("")}
       </ul>
+      </div>
+      <p class="subtitle" id="types-summary" style="margin:0; font-size:12px;">${esc(roundOneSummary())} Toca un tipo para quitarlo hoy.</p>
     </div>
     <button class="cta" data-action="start-round1" data-autofocus>${emo("🍽️")} Empezar ronda 1</button>
     <a href="./admin.html" class="cta ghost small" style="text-decoration:none; text-align:center;">${emo("⚙️")} Configurar tipos, ingredientes y recetas</a>
@@ -488,7 +518,8 @@ function render() {
   // devolvérselo a su equivalente (p. ej. el botón + del stepper).
   const prevFocus = document.activeElement?.closest?.("#app [data-action], #app [data-name-idx]");
   const prevFocusSel = prevFocus
-    ? (prevFocus.dataset.nameIdx !== undefined ? `[data-name-idx="${prevFocus.dataset.nameIdx}"]` : `[data-action="${prevFocus.dataset.action}"]`)
+    ? (prevFocus.dataset.nameIdx !== undefined ? `[data-name-idx="${prevFocus.dataset.nameIdx}"]`
+      : `[data-action="${prevFocus.dataset.action}"]` + (prevFocus.dataset.id ? `[data-id="${CSS.escape(prevFocus.dataset.id)}"]` : ""))
     : null;
 
   app.innerHTML = (renderers[state.stage] || renderLoading)();
@@ -546,6 +577,7 @@ document.getElementById("app").addEventListener("click", (e) => {
   else if (action === "swipe-no") triggerSwipe(false);
   else if (action === "swipe-yes") triggerSwipe(true);
   else if (action === "undo") undoSwipe();
+  else if (action === "toggle-type") toggleType(btn.dataset.id);
   else if (action === "start-round2") startRound2();
   else if (action === "start-round3") startRound3();
   else if (action === "reset") resetAll();

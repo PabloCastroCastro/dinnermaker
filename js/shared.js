@@ -122,6 +122,16 @@ export function pickCandidates(matchedIds, recipes, config) {
 }
 
 /**
+ * Mazo de la ronda 1: muestra aleatoria de como mucho `max` tipos de cena
+ * (`game-config.json → dishTypeCandidateMax`), para que la ronda no se haga
+ * eterna con muchos tipos. Sin `max` (o con 0) entran todos, barajados.
+ */
+export function pickDishTypes(dishTypes, max) {
+  const deck = shuffle(dishTypes);
+  return max > 0 ? deck.slice(0, max) : deck;
+}
+
+/**
  * Resuelve el tipo de cena elegido a partir de los tipos matcheados en la
  * ronda 1. Si hay más de uno, se sortea entre los empatados.
  */

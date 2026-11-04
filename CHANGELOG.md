@@ -21,6 +21,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   siempre en texto (también en "También coincidisteis en" y en el admin);
   chips del admin usables con teclado; `prefers-reduced-motion`.
 - Deshacer el último voto del turno con "↶ Deshacer" o Ctrl+Z (#26).
+- Ronda 1 con muestra de tipos: salen como mucho `dishTypeCandidateMax`
+  (10 por defecto) elegidos al azar. En el setup se pueden quitar tipos para
+  esa partida tocando su chip. El admin permite editar el ajuste (#25).
 
 ### Cambiado
 - Contraste WCAG AA: botones rellenos `#E1472B` → `#C93A1F`, textos
@@ -31,6 +34,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   o con red lenta, arranca desde caché (#5).
 
 ### Corregido
+- Admin, ajustes globales: mínimo y máximo de jugadores se validan (antes
+  `|| 2` / `|| 8` sustituían valores inválidos en silencio, y se podía
+  guardar un máximo menor que el mínimo) (#25).
 - Admin: el foco ya no se pierde al re-renderizar. Al cambiar de pestaña
   queda en la pestaña; al abrir un formulario, en su primer campo; al
   guardar o cancelar, en el ✎ de la fila; al borrar, en la fila siguiente;

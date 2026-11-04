@@ -31,6 +31,9 @@ test("game-config.json tiene un rango de jugadores válido", () => {
   const gc = readJSON("data/game-config.json");
   assert.ok(Number.isInteger(gc.minPlayers) && gc.minPlayers >= 1, "minPlayers");
   assert.ok(Number.isInteger(gc.maxPlayers) && gc.maxPlayers >= gc.minPlayers, "maxPlayers >= minPlayers");
+  if ("dishTypeCandidateMax" in gc) {
+    assert.ok(Number.isInteger(gc.dishTypeCandidateMax) && gc.dishTypeCandidateMax >= 0, "dishTypeCandidateMax debe ser un entero >= 0 (0 = todos)");
+  }
 });
 
 const dishTypes = readJSON("data/dish-types.json");
