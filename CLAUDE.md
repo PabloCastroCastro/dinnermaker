@@ -67,12 +67,12 @@ manteniendo ambas cosas sincronizadas.
   `.chip`, etc.) antes de crear clases nuevas.
 - **Verificación antes de abrir PR** (requiere Node ≥ 22, sin dependencias):
   ```bash
-  node --test                                   # tests de js/shared.js (tests/*.test.mjs)
+  node --test                                   # tests de js/shared.js + integridad de /data
   node --input-type=module --check < js/app.js
-  python3 -c "import json,glob; [json.load(open(f)) for f in glob.glob('data/*.json')]"
   ```
   Si cambias `buildBalancedPool`, `pickCandidates` o `resolveDishType`,
-  añade o ajusta tests en `tests/shared.test.mjs`.
+  añade o ajusta tests en `tests/shared.test.mjs`. Lo mismo corre en CI
+  (`.github/workflows/ci.yml`) en cada push a `main`/`develop` y en cada PR.
 
 ## Cómo correr en local
 

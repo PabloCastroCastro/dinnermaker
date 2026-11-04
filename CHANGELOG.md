@@ -8,6 +8,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Tests de `buildBalancedPool`, `pickCandidates`, `resolveDishType` y
   `shuffle` con `node:test` (`tests/shared.test.mjs`), incluyendo
   comprobaciones sobre los datos reales de `data/types/` (#2).
+- CI con GitHub Actions (`.github/workflows/ci.yml`): `node --check` del JS
+  y `node --test`, que ahora incluye la validación de `/data`
+  (`tests/data.test.mjs`: JSON válido, ids únicos, recetas sin ingredientes
+  inexistentes, categorías con tope, `visualStyle` conocido) (#3).
 
 ### Corregido
 - La ronda 2 ya no se queda en "Cargando…" si falla la carga del tipo de
