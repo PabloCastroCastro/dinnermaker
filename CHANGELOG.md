@@ -20,6 +20,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   inputs y cartas; los emojis pasan a ser decorativos y el nombre se muestra
   siempre en texto (también en "También coincidisteis en" y en el admin);
   chips del admin usables con teclado; `prefers-reduced-motion`.
+- Deshacer el último voto del turno con "↶ Deshacer" o Ctrl+Z (#26).
 
 ### Cambiado
 - Contraste WCAG AA: botones rellenos `#E1472B` → `#C93A1F`, textos
