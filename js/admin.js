@@ -15,26 +15,133 @@ const state = {
   editingDishType: null,
   editingIngredient: null,
   editingRecipe: null,
+  // Huella del contenido de /data de cada fichero cuando entró al borrador
+  // ({ "data/dish-types.json": "9f3a…", ... }). Permite saber, al volver a
+  // abrir el admin, si /data ha cambiado desde entonces y si el borrador
+  // tiene ediciones propias en ese fichero.
+  base: {},
+  draftNotice: null, // { kind: "conflict" | "legacy" | "unchecked", files?, error? }
+  loadError: null,   // fallo al cargar /data sin borrador: pantalla de error
 };
+let remoteSnapshot = null; // { files: { [fichero]: contenido }, prints: { [fichero]: huella } }
+
+const TYPE_FILES = ["ingredients", "recipes", "config"];
+const F_TYPES = "data/dish-types.json";
+const F_GAME = "data/game-config.json";
+const typeFile = (id, kind) => `data/types/${id}/${kind}.json`;
+const parseTypeFile = (f) => f.match(/^data\/types\/([^/]+)\/(ingredients|recipes|config)\.json$/)?.slice(1);
+
+// FNV-1a de 32 bits sobre el JSON: basta para detectar cambios, no es criptográfico.
+function fingerprint(value) {
+  const s = JSON.stringify(value);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, "0");
+}
+
+function getDraftFile(f) {
+  if (f === F_TYPES) return state.dishTypes;
+  if (f === F_GAME) return state.gameConfig;
+  const [id, kind] = parseTypeFile(f) || [];
+  return state.typeCache[id]?.[kind];
+}
+function setDraftFile(f, value) {
+  if (f === F_TYPES) state.dishTypes = value;
+  else if (f === F_GAME) state.gameConfig = value;
+  else {
+    const [id, kind] = parseTypeFile(f);
+    state.typeCache[id] = state.typeCache[id] || { ingredients: [], recipes: [], config: emptyTypeConfig() };
+    state.typeCache[id][kind] = value;
+  }
+}
+const emptyTypeConfig = () => ({ ingredientPoolSize: 0, categoryCaps: {}, candidateMax: 6, candidateMinOverlap: 2 });
+
+function readDraft() {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch { return null; }
+}
 
 async function init() {
-  const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
-  if (draft) {
-    Object.assign(state, draft);
-    toast("Borrador cargado desde este navegador");
+  const draft = readDraft();
+  let remote = null;
+  let remoteError = null;
+  try { remote = await loadGameConfig(); } catch (e) { remoteError = e; }
+
+  if (!draft) {
+    if (!remote) { state.loadError = remoteError.message; render(); return; }
+    state.dishTypes = remote.dishTypes;
+    state.gameConfig = remote.gameConfig;
+    state.base = { [F_TYPES]: fingerprint(remote.dishTypes), [F_GAME]: fingerprint(remote.gameConfig) };
   } else {
-    const loaded = await loadGameConfig();
-    state.dishTypes = loaded.dishTypes;
-    state.gameConfig = loaded.gameConfig;
+    state.gameConfig = draft.gameConfig;
+    state.dishTypes = draft.dishTypes;
+    state.typeCache = draft.typeCache || {};
+    state.base = draft.base || {};
+    if (remote) await reconcileWithData(draft, remote);
+    else state.draftNotice = { kind: "unchecked", error: remoteError.message };
   }
   if (!state.selectedTypeId && state.dishTypes.length) state.selectedTypeId = state.dishTypes[0].id;
   render();
   if (state.selectedTypeId) await ensureTypeLoaded(state.selectedTypeId);
 }
 
+// Compara el borrador con /data fichero a fichero:
+// - /data no cambió desde que entró al borrador → se mantiene el borrador.
+// - /data cambió y el borrador no tenía ediciones en ese fichero → se
+//   actualiza solo (aviso breve).
+// - /data cambió y el borrador también → conflicto: aviso visible para
+//   elegir entre la versión de /data o mantener el borrador.
+// Un borrador anterior a este mecanismo (sin `base`) no permite distinguir
+// ediciones propias, así que se avisa siempre.
+async function reconcileWithData(draft, remote) {
+  const files = { [F_TYPES]: remote.dishTypes, [F_GAME]: remote.gameConfig };
+  const remoteIds = new Set(remote.dishTypes.map((t) => t.id));
+  const draftIds = Object.keys(state.typeCache);
+  const hadBase = (id) => TYPE_FILES.some((k) => typeFile(id, k) in state.base);
+  const unreadable = new Set(); // listados en /data pero que no cargan: sin comprobar, no "eliminados"
+  await Promise.all(draftIds.filter((id) => remoteIds.has(id) || hadBase(id)).map(async (id) => {
+    try {
+      const d = await loadTypeData(id);
+      for (const k of TYPE_FILES) files[typeFile(id, k)] = d[k];
+    } catch {
+      if (remoteIds.has(id)) unreadable.add(id); // si no está en dish-types.json, se trata como eliminado
+    }
+  }));
+  const prints = Object.fromEntries(Object.entries(files).map(([f, v]) => [f, fingerprint(v)]));
+  remoteSnapshot = { files, prints };
+
+  if (!draft.base) {
+    state.draftNotice = { kind: "legacy", files: Object.keys(files) };
+    return;
+  }
+  const updated = [];
+  const conflicts = [];
+  for (const [f, basePrint] of Object.entries(state.base)) {
+    if (prints[f] === basePrint) continue;                        // /data no ha cambiado
+    if (unreadable.has(parseTypeFile(f)?.[0])) continue;          // no se pudo leer: sin comprobar
+    const localEdits = fingerprint(getDraftFile(f)) !== basePrint;
+    if (!localEdits) {
+      if (f in files) { setDraftFile(f, files[f]); state.base[f] = prints[f]; }
+      else { delete state.base[f]; }                              // eliminado en /data, sin ediciones
+      updated.push(f);
+    } else {
+      conflicts.push({ file: f, removed: !(f in files) });
+    }
+  }
+  // Tipos que ya no están en /data ni en el borrador: fuera de la caché.
+  for (const id of Object.keys(state.typeCache)) {
+    if (!state.dishTypes.some((t) => t.id === id) && !hadBase(id)) delete state.typeCache[id];
+  }
+  if (updated.length) saveDraft();
+  if (conflicts.length) state.draftNotice = { kind: "conflict", files: conflicts };
+  else toast(updated.length
+    ? `Borrador cargado. Actualizado desde /data (sin ediciones tuyas): ${updated.join(", ")}`
+    : "Borrador cargado desde este navegador");
+}
+
 function saveDraft() {
   localStorage.setItem(DRAFT_KEY, JSON.stringify({
-    gameConfig: state.gameConfig, dishTypes: state.dishTypes, typeCache: state.typeCache,
+    version: 2,
+    gameConfig: state.gameConfig, dishTypes: state.dishTypes, typeCache: state.typeCache, base: state.base,
   }));
 }
 
@@ -43,11 +150,49 @@ async function ensureTypeLoaded(id) {
   try {
     const data = await loadTypeData(id);
     state.typeCache[id] = { ingredients: data.ingredients, recipes: data.recipes, config: data.config };
+    for (const k of TYPE_FILES) state.base[typeFile(id, k)] = fingerprint(data[k]);
     saveDraft();
-  } catch {
-    state.typeCache[id] = { ingredients: [], recipes: [], config: { ingredientPoolSize: 0, categoryCaps: {}, candidateMax: 6, candidateMinOverlap: 2 } };
+  } catch (e) {
+    // Se muestra vacío para poder darle contenido, pero avisando del motivo.
+    state.typeCache[id] = { ingredients: [], recipes: [], config: emptyTypeConfig() };
+    toast(`No se pudo cargar el tipo «${id}» de /data: ${e.message}. Se muestra vacío.`);
   }
   render();
+}
+
+function draftNoticeHTML() {
+  const n = state.draftNotice;
+  if (!n) return "";
+  const list = (files) => `<ul style="margin:6px 0 10px; padding-left:18px;">${files.map((f) =>
+    `<li><code>${esc(f.file || f)}</code>${f.removed ? " (eliminado en /data)" : ""}</li>`).join("")}</ul>`;
+  const body = n.kind === "conflict"
+    ? `<p style="margin:0;">Estos ficheros han cambiado en <code>/data</code> desde que empezaste el borrador, y también los has editado aquí:</p>
+       ${list(n.files)}
+       <p style="margin:0 0 4px;">Si usas la versión de <code>/data</code>, perderás tus cambios en esos ficheros (el resto del borrador se mantiene).</p>`
+    : n.kind === "legacy"
+      ? `<p style="margin:0 0 4px;">Este borrador es de una versión anterior del admin y no se puede saber si <code>/data</code> ha cambiado desde entonces. Si no recuerdas haber editado nada, usa la versión de <code>/data</code>.</p>`
+      : `<p style="margin:0 0 4px;">No se pudo leer <code>/data</code> para comprobar si ha cambiado (${esc(n.error)}). Estás trabajando sobre el borrador guardado en este navegador.</p>`;
+  const actions = n.kind === "unchecked"
+    ? `<button class="cta small" data-action="notice-retry">${emo("⟳")} Reintentar</button>
+       <button class="cta ghost small" data-action="notice-keep">Seguir con el borrador</button>`
+    : `<button class="cta small" data-action="notice-use-data">Usar la versión de /data</button>
+       <button class="cta ghost small" data-action="notice-keep">Mantener mi borrador</button>`;
+  return `
+    <section class="card-panel draft-notice" role="alert" aria-labelledby="draft-notice-title" style="margin-bottom:16px; border-color:rgba(232,163,61,0.6);">
+      <h2 id="draft-notice-title" class="row-label mono" style="color:#E8A33D; margin:0 0 8px;">${{ unchecked: "No se pudo comprobar /data", legacy: "Borrador de una versión anterior", conflict: "/data ha cambiado" }[n.kind]}</h2>
+      <div style="font-size:14px;">${body}</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">${actions}</div>
+    </section>`;
+}
+
+function renderLoadError() {
+  document.getElementById("app").innerHTML = `
+    <div class="screen">
+      <h1 class="title display" style="font-size:24px;margin:0 0 16px;">${emo("⚙️")} Configurar Dinner Match</h1>
+      <div class="error-box" role="alert">No se pudo cargar el contenido de <code>/data</code>.<br>${esc(state.loadError)}</div>
+      <button class="cta" data-action="notice-retry" style="margin-top:16px;">${emo("⟳")} Reintentar</button>
+      <a href="./index.html" class="cta ghost small" style="text-decoration:none; text-align:center;">← Volver al juego</a>
+    </div>`;
 }
 
 // Región de avisos persistente (creada al cargar, no con el primer aviso,
@@ -278,6 +423,7 @@ function configTab() {
 }
 
 function render() {
+  if (state.loadError) return renderLoadError();
   const app = document.getElementById("app");
   const tabContent = state.tab === "dishtypes" ? dishTypesTab()
     : state.tab === "ingredients" ? ingredientsTab()
@@ -289,6 +435,7 @@ function render() {
         <h1 class="title display" style="font-size:24px;margin:0;">${emo("⚙️")} Configurar Dinner Match</h1>
         <a href="./index.html" class="cta ghost small" style="width:auto; margin:0; padding:8px 12px; text-decoration:none;">← Volver al juego</a>
       </div>
+      ${draftNoticeHTML()}
       <nav class="admin-nav" aria-label="Secciones">
         <button class="${state.tab === "dishtypes" ? "active" : ""}" aria-pressed="${state.tab === "dishtypes"}" data-action="tab" data-tab="dishtypes">Tipos de cena</button>
         <button class="${state.tab === "ingredients" ? "active" : ""}" aria-pressed="${state.tab === "ingredients"}" data-action="tab" data-tab="ingredients">Ingredientes</button>
@@ -478,6 +625,43 @@ document.getElementById("app").addEventListener("click", async (e) => {
   else if (action === "export-ingredients") download("ingredients.json", currentType().ingredients);
   else if (action === "export-recipes") download("recipes.json", currentType().recipes);
   else if (action === "export-typeconfig") download("config.json", currentType().config);
+
+  // -- Aviso de borrador vs /data --
+  else if (action === "notice-retry") location.reload();
+  else if (action === "notice-use-data") {
+    const n = state.draftNotice;
+    if (n.kind === "legacy") { localStorage.removeItem(DRAFT_KEY); location.reload(); return; }
+    for (const { file, removed } of n.files) {
+      if (!removed) { setDraftFile(file, remoteSnapshot.files[file]); state.base[file] = remoteSnapshot.prints[file]; continue; }
+      // Tipo eliminado en /data: fuera del borrador entero.
+      const [id] = parseTypeFile(file) || [];
+      if (id) { delete state.typeCache[id]; for (const k of TYPE_FILES) delete state.base[typeFile(id, k)]; }
+    }
+    if (state.selectedTypeId && !state.typeCache[state.selectedTypeId] && !state.dishTypes.some((t) => t.id === state.selectedTypeId)) {
+      state.selectedTypeId = state.dishTypes[0]?.id || null;
+    }
+    state.draftNotice = null;
+    saveDraft(); render();
+    document.querySelector(".admin-nav button.active")?.focus();
+    toast("Cargada la versión de /data en esos ficheros");
+  }
+  else if (action === "notice-keep") {
+    const n = state.draftNotice;
+    // A partir de ahora la referencia es el /data actual: solo se volverá a
+    // avisar si /data cambia otra vez.
+    if (n.kind === "conflict") {
+      for (const { file, removed } of n.files) {
+        if (removed) delete state.base[file]; else state.base[file] = remoteSnapshot.prints[file];
+      }
+    } else if (n.kind === "legacy") {
+      for (const [f, p] of Object.entries(remoteSnapshot.prints)) if (getDraftFile(f) !== undefined) state.base[f] = p;
+    }
+    state.draftNotice = null;
+    if (n.kind !== "unchecked") saveDraft();
+    render();
+    document.querySelector(".admin-nav button.active")?.focus();
+    toast(n.kind === "unchecked" ? "Trabajando sobre el borrador" : "Borrador mantenido");
+  }
 
   else if (action === "clear-draft") {
     if (confirm("Se perderá el borrador local y se recargará el contenido de /data. ¿Continuar?")) {

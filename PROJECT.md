@@ -164,6 +164,18 @@ en `admin.html` → descargar → sustituir el fichero en `/data` (o
 `/data/types/<id>/`) → commit al repo. No hay persistencia de servidor en
 esta fase.
 
+El borrador guarda también una huella (hash) del contenido de `/data` de
+cada fichero en el momento en que entró al borrador. Al reabrir el admin se
+vuelve a leer `/data` y, por fichero:
+- si `/data` no ha cambiado, se mantiene el borrador;
+- si `/data` ha cambiado y el borrador no tiene ediciones en ese fichero,
+  se actualiza solo;
+- si han cambiado ambos, se avisa (conflicto) para elegir entre la versión
+  de `/data` (solo en esos ficheros) o mantener el borrador.
+
+Si `/data` no carga, el admin muestra un error con "Reintentar" (sin
+borrador) o trabaja sobre el borrador avisando de que no pudo comprobarlo.
+
 ## 7. Roadmap (fuera de esta fase)
 
 1. **Multijugador remoto real**: cada jugador entra desde su móvil con un
