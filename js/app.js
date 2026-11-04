@@ -19,7 +19,9 @@ const state = {
   dragging: false,
   exitDir: 0,
   animating: false,
+  errorTitle: "",
   errorMsg: "",
+  errorRetry: "reload", // reload | round2
 };
 
 let dishTypes = [];
@@ -43,9 +45,20 @@ async function init() {
     }
     state.stage = "setup";
   } catch (e) {
-    state.stage = "error";
-    state.errorMsg = e.message;
+    showError("No se pudo cargar el contenido del juego.", e.message, "reload");
+    return;
   }
+  render();
+}
+
+// retry: "reload" (fallo al arrancar, no hay nada que conservar) o
+// "round2" (reintenta solo la carga del tipo, sin perder la ronda 1; además
+// se puede volver al setup porque los datos globales sí están cargados).
+function showError(title, detail, retry) {
+  state.stage = "error";
+  state.errorTitle = title;
+  state.errorMsg = detail;
+  state.errorRetry = retry;
   render();
 }
 
@@ -71,7 +84,13 @@ function startRound1() {
 async function startRound2() {
   state.stage = "loading";
   render();
-  typeData = await loadTypeData(state.dishTypeResult.chosen.id);
+  const chosen = state.dishTypeResult.chosen;
+  try {
+    typeData = await loadTypeData(chosen.id);
+  } catch (e) {
+    showError(`No se pudo cargar el contenido de «${chosen.name}».`, e.message, "round2");
+    return;
+  }
   state.round = 2;
   state.deck = buildBalancedPool(typeData.ingredients, typeData.config);
   state.likesByPlayer = Array.from({ length: state.numPlayers }, () => []);
@@ -190,7 +209,15 @@ function renderLoading() {
   return `<div class="screen"><p class="subtitle">Cargando…</p></div>`;
 }
 function renderError() {
-  return `<div class="screen"><div class="error-box">No se pudo cargar el contenido del juego.<br>${esc(state.errorMsg)}<br><br>¿Estás sirviendo la carpeta con un servidor local (no file://)?</div></div>`;
+  const hint = location.protocol === "file:"
+    ? `<br><br>¿Estás sirviendo la carpeta con un servidor local (no file://)?`
+    : "";
+  return `
+  <div class="screen">
+    <div class="error-box">${esc(state.errorTitle)}<br>${esc(state.errorMsg)}${hint}</div>
+    <button class="cta" data-action="retry" style="margin-top:16px;">⟳ Reintentar</button>
+    ${state.errorRetry === "round2" ? `<button class="cta ghost" data-action="reset" style="margin-top:10px;">↺ Volver al inicio</button>` : ""}
+  </div>`;
 }
 
 function renderSetup() {
@@ -395,6 +422,7 @@ document.getElementById("app").addEventListener("click", (e) => {
   else if (action === "start-round2") startRound2();
   else if (action === "start-round3") startRound3();
   else if (action === "reset") resetAll();
+  else if (action === "retry") state.errorRetry === "round2" ? startRound2() : location.reload();
 });
 document.getElementById("app").addEventListener("input", (e) => {
   const idx = e.target.getAttribute("data-name-idx");

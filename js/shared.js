@@ -19,10 +19,21 @@ export async function loadTypeData(typeId) {
   return { ingredients, recipes, config, ingById: indexById(ingredients) };
 }
 
+// Todos los errores mencionan el fichero: fetch() sin red y res.json() con
+// JSON inválido lanzan errores genéricos que no dicen qué falló.
 async function fetchJSON(path) {
-  const res = await fetch(path, { cache: "no-store" });
+  let res;
+  try {
+    res = await fetch(path, { cache: "no-store" });
+  } catch {
+    throw new Error(`No se pudo cargar ${path} (sin conexión o servidor no disponible)`);
+  }
   if (!res.ok) throw new Error(`No se pudo cargar ${path} (${res.status})`);
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    throw new Error(`${path} no es un JSON válido`);
+  }
 }
 
 export function shuffle(arr) {

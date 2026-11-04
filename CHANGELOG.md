@@ -2,6 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Sin publicar]
+
+### Corregido
+- La ronda 2 ya no se queda en "Cargando…" si falla la carga del tipo de
+  cena elegido: muestra el error con el fichero que falló y permite
+  reintentar (sin perder la ronda 1) o volver al inicio (#19).
+- Los errores de carga de `/data` indican siempre el fichero afectado,
+  también sin conexión o con JSON inválido.
+
 ## [2.0.0] — sin publicar
 
 ### Cambiado — rediseño mayor: de "Pizza Match" a "Dinner Match"
